@@ -78,13 +78,7 @@ export class SigilService {
                     console.log(`📡 Usando modelo: ${modelName}`);
                     const model = this.genAI.getGenerativeModel({
                         model: modelName,
-                        systemInstruction: systemPrompt,
-                        safetySettings: [
-                            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        ]
+                        systemInstruction: systemPrompt
                     });
 
                     const chat = model.startChat({ history: [] });
@@ -135,13 +129,7 @@ export class SigilService {
                 console.log(`🌌 Usando modelo: ${modelName}`);
                 // For Tarot, we just need a direct generation failure
                 const model = this.genAI.getGenerativeModel({
-                    model: modelName,
-                    safetySettings: [
-                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    ]
+                    model: modelName
                 });
                 const result = await model.generateContent(prompt);
                 const response = result.response.text();
@@ -163,6 +151,7 @@ export class SigilService {
             }
         }
 
+        console.error(">>> ERROR CRÍTICO CAPTURADO:", lastError);
         console.error('❌ SigilService.generateResponse Final Error:', lastError);
 
         if (this.isRateLimitError(lastError)) {

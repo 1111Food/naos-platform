@@ -1,5 +1,5 @@
 // Use relative paths to allow Vite Proxy to handle cross-origin/IP issues
-export const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+export const API_BASE_URL = 'http://localhost:3001';
 
 export const endpoints = {
     chat: '/api/chat',
