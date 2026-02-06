@@ -22,8 +22,9 @@ export const config = {
 };
 
 // Debug log (masked)
-if (config.GOOGLE_API_KEY) {
-    console.log(`🔑 GOOGLE_API_KEY loaded: ${config.GOOGLE_API_KEY.substring(0, 4)}...`);
-} else {
-    console.error("❌ GOOGLE_API_KEY is missing in environment variables");
+const usedKey = config.GOOGLE_API_KEY || "(EMPTY)";
+console.log(`📡 Cosmic Config: GOOGLE_API_KEY detected? ${config.GOOGLE_API_KEY ? 'YES' : 'NO'} (${usedKey.substring(0, 4)}...)`);
+
+if (!config.GOOGLE_API_KEY) {
+    console.error("❌ CRITICAL: GOOGLE_API_KEY is missing. Production AI will fail.");
 }

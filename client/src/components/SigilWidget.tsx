@@ -17,7 +17,7 @@ export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMe
     React.useEffect(() => {
         if (externalMessage) {
             setMessages(prev => [...prev, { role: 'sigil', text: externalMessage }]);
-            setIsOpen(true);
+            // REMOVED: setIsOpen(true); // Luis requested manual opening only
         }
     }, [externalMessage]);
 

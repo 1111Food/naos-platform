@@ -11,6 +11,7 @@ export class SigilService {
     private genAI: GoogleGenerativeAI;
 
     constructor() {
+        console.log("🕯️ SigilService: Manifesting AI with GOOGLE_API_KEY...");
         this.genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
     }
 
