@@ -69,8 +69,15 @@ export class SigilService {
     `;
 
         try {
-            // MODELOS PRIORIZADOS: Se utiliza -latest para asegurar compatibilidad con la API
-            const modelNames = ['gemini-1.5-flash-latest', 'gemini-1.5-pro'];
+            // MODELOS PRIORIZADOS: Se prueban variaciones de nombre para evitar el error 404
+            const modelNames = [
+                'gemini-1.5-flash-latest',
+                'models/gemini-1.5-flash-latest',
+                'gemini-1.5-flash',
+                'models/gemini-1.5-flash',
+                'gemini-1.5-pro',
+                'models/gemini-1.5-pro'
+            ];
             let lastError: any = null;
 
             for (const modelName of modelNames) {
@@ -101,8 +108,13 @@ export class SigilService {
                         continue;
                     }
 
-                    if (e.message?.includes('404')) continue;
-                    break;
+                    // If 404/Not Found, try next model. If 401 (Auth), break immediately.
+                    const isNotFoundError = e.status === 404 || e.message?.includes('404') || e.message?.toLowerCase().includes('not found');
+                    if (isNotFoundError) {
+                        console.warn(`🔍 Model ${modelName} not found. Trying next variant...`);
+                        continue;
+                    }
+                    if (e.message?.includes('401')) break;
                 }
             }
 
@@ -120,8 +132,15 @@ export class SigilService {
     }
 
     async generateResponse(prompt: string, userId: string): Promise<string> {
-        // Primary stable model for Tarot - STRICT 1.5 FLASH LATEST with PRO Fallback
-        const modelNames = ['gemini-1.5-flash-latest', 'gemini-1.5-pro'];
+        // Primary stable models for Tarot - Exhaustive list to avoid 404
+        const modelNames = [
+            'gemini-1.5-flash-latest',
+            'models/gemini-1.5-flash-latest',
+            'gemini-1.5-flash',
+            'models/gemini-1.5-flash',
+            'gemini-1.5-pro',
+            'models/gemini-1.5-pro'
+        ];
         let lastError: any = null;
 
         for (const modelName of modelNames) {
@@ -146,7 +165,11 @@ export class SigilService {
                 }
 
                 // If 404/Not Found, try next model. If 401 (Auth), break immediately.
-                if (error.message?.includes('404') || error.message?.includes('not found')) continue;
+                const isNotFoundError = error.status === 404 || error.message?.includes('404') || error.message?.toLowerCase().includes('not found');
+                if (isNotFoundError) {
+                    console.warn(`🔍 Model ${modelName} not found for Tarot. Trying next variant...`);
+                    continue;
+                }
                 if (error.message?.includes('401')) break;
             }
         }
