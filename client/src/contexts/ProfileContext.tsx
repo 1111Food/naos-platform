@@ -11,6 +11,7 @@ export interface UserProfile {
     astrology?: any;
     numerology?: any;
     fengShui?: any;
+    mayan?: any;
     sigil_url?: string;
     subscription: {
         plan: 'FREE' | 'PREMIUM';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sun, Wind, Mountain, Droplets, Flame, Circle, Zap } from 'lucide-react';
+import { Sun } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface NawalCardProps {

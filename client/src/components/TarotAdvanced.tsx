@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Flower2, ScrollText } from 'lucide-react';
-import { cn } from '../lib/utils';
+// import { cn } from '../lib/utils';
 import { endpoints } from '../lib/api';
 
 export const TarotAdvanced: React.FC = () => {

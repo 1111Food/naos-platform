@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send, Sparkles } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 
 interface SigilWidgetProps {
     onNavigate: (view: any) => void;

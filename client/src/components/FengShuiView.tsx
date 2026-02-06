@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, Compass, Sparkles } from 'lucide-react';
+import { Compass, Sparkles } from 'lucide-react';
 
 interface FengShuiViewProps {
     data: any;
