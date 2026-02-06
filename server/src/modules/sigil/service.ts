@@ -110,7 +110,7 @@ export class SigilService {
             console.error('❌ SigilService Final Error:', error);
 
             if (this.isRateLimitError(error)) {
-                return "Los astros están en silencio momentáneo. El Templo está recalibrando su energía debido a la alta demanda mística. Por favor, intenta conectar tu intención en unos segundos. ✨";
+                return `Los astros están en silencio momentáneo. (Error: ${error.message || 'Unknown'}). El Templo está recalibrando su energía debido a la alta demanda mística. Por favor, intenta conectar tu intención en unos segundos. ✨`;
             }
 
             return "El éter está turbulento en este momento. Intenta sintonizar tu energía más tarde o revisa tu conexión mística. La paz sea contigo.";
@@ -149,7 +149,7 @@ export class SigilService {
         console.error('❌ SigilService.generateResponse Final Error:', lastError);
 
         if (this.isRateLimitError(lastError)) {
-            return "Los espíritus susurran que el Templo está saturado de visiones en este momento. Descansa tu mente unos segundos y vuelve a consultar pronto. 🌙";
+            return `Los espíritus susurran que el Templo está saturado de visiones en este momento. (Error: ${lastError.message || 'Unknown'}). Descansa tu mente unos segundos y vuelve a consultar pronto. 🌙`;
         }
 
         return "Los arcanos permanecen velados por ahora. Sintoniza tu intención nuevamente en unos momentos bajo la guía de tu paz interior.";
