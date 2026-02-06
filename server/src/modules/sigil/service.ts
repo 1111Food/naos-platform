@@ -69,8 +69,8 @@ export class SigilService {
     `;
 
         try {
-            // MODELOS PRIORIZADOS: gemini-1.5-flash es el modelo estable obligatorio
-            const modelNames = ['gemini-1.5-flash'];
+            // MODELOS PRIORIZADOS: Se utiliza -latest para asegurar compatibilidad con la API
+            const modelNames = ['gemini-1.5-flash-latest', 'gemini-1.5-pro'];
             let lastError: any = null;
 
             for (const modelName of modelNames) {
@@ -120,8 +120,8 @@ export class SigilService {
     }
 
     async generateResponse(prompt: string, userId: string): Promise<string> {
-        // Primary stable model for Tarot - STRICT 1.5 FLASH
-        const modelNames = ['gemini-1.5-flash'];
+        // Primary stable model for Tarot - STRICT 1.5 FLASH LATEST with PRO Fallback
+        const modelNames = ['gemini-1.5-flash-latest', 'gemini-1.5-pro'];
         let lastError: any = null;
 
         for (const modelName of modelNames) {
