@@ -68,8 +68,8 @@ export class SigilService {
     `;
 
         try {
-            // MODELOS DISPONIBLES CONFIRMADOS (User Tier: 1.5 Pro)
-            const modelNames = ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash'];
+            // MODELOS PRIORIZADOS: Flash para estabilidad, Pro como respaldo de calidad
+            const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'];
             let lastError: any = null;
 
             for (const modelName of modelNames) {
@@ -118,8 +118,8 @@ export class SigilService {
     }
 
     async generateResponse(prompt: string, userId: string): Promise<string> {
-        // Updated model list based on latest availability
-        const modelNames = ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash'];
+        // Flash prioritized for Tarot readings to avoid saturation
+        const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'];
         let lastError: any = null;
 
         for (const modelName of modelNames) {
