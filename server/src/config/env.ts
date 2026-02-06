@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Default looks for .env in process.cwd()
-const result = dotenv.config();
+// Load .env from root
+const result = dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
 if (result.error) {
     console.warn("⚠️  .env file not found or failed to load.");

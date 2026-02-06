@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Triangle, Flower2, Wind, MessageCircle, Moon, Sun } from 'lucide-react';
+import { Sun, Wind, MessageCircle, Flower2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useTimeBasedMode } from '../hooks/useTimeBasedMode';
 

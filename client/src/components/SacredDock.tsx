@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Flower2, Heart, Wind, Compass, Sparkles } from 'lucide-react';
+import { Star, Flower2, Heart, Wind } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
 

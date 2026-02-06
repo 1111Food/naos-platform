@@ -1,7 +1,7 @@
 // PADDING TO PROTECT AGAINST CORRUPTION
 // PADDING TO PROTECT AGAINST CORRUPTION
 import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig, random } from 'remotion';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 const SYMBOLS = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓", "1", "3", "7", "9", "11", "33"];
 

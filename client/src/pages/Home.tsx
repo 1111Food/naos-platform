@@ -1,9 +1,9 @@
 import React from 'react';
-import { Star, Triangle, MapPin, Activity, Sun } from 'lucide-react';
+import { Sun, Activity, Star, Triangle, MapPin } from 'lucide-react';
 import { Player } from '@remotion/player';
 import { TempleAura } from '../remotion/TempleAura';
 import { cn } from '../lib/utils';
-import { useTimeBasedMode } from '../hooks/useTimeBasedMode';
+// import { useTimeBasedMode } from '../hooks/useTimeBasedMode';
 import { useEnergy } from '../hooks/useEnergy';
 import { useProfile } from '../hooks/useProfile';
 
@@ -13,7 +13,7 @@ interface HomeProps {
 }
 
 export const Home: React.FC<HomeProps> = ({ onSelectFeature }) => {
-    const timeMode = useTimeBasedMode();
+    // const timeMode = useTimeBasedMode(); // Removed to satisfy tsc
     const { energy } = useEnergy();
     const { profile } = useProfile();
 
