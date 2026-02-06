@@ -68,13 +68,13 @@ export class SigilService {
     `;
 
         try {
-            // MODELOS PRIORIZADOS: Flash para estabilidad, Pro como respaldo de calidad
-            const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'];
+            // MODELOS PRIORIZADOS: gemini-1.5-flash es el modelo estable obligatorio
+            const modelNames = ['gemini-1.5-flash'];
             let lastError: any = null;
 
             for (const modelName of modelNames) {
                 try {
-                    console.log(`📡 Sigil: Intentando con modelo ${modelName}...`);
+                    console.log(`📡 Usando modelo: ${modelName}`);
                     const model = this.genAI.getGenerativeModel({
                         model: modelName,
                         systemInstruction: systemPrompt
@@ -95,7 +95,8 @@ export class SigilService {
 
                     // Specific Handling for Rate Limits
                     if (this.isRateLimitError(e)) {
-                        console.warn(`🛑 Rate limit hit for ${modelName}. Trying next...`);
+                        console.warn(`🛑 Rate limit hit for ${modelName}. Waiting 2s before retry...`);
+                        await new Promise(resolve => setTimeout(resolve, 2000));
                         continue;
                     }
 
@@ -118,13 +119,13 @@ export class SigilService {
     }
 
     async generateResponse(prompt: string, userId: string): Promise<string> {
-        // Flash prioritized for Tarot readings to avoid saturation
-        const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'];
+        // Primary stable model for Tarot - STRICT 1.5 FLASH
+        const modelNames = ['gemini-1.5-flash'];
         let lastError: any = null;
 
         for (const modelName of modelNames) {
             try {
-                console.log(`🌌 Tarot: Consultando arcanos con ${modelName}...`);
+                console.log(`🌌 Usando modelo: ${modelName}`);
                 // For Tarot, we just need a direct generation failure
                 const model = this.genAI.getGenerativeModel({ model: modelName });
                 const result = await model.generateContent(prompt);
@@ -136,7 +137,8 @@ export class SigilService {
 
                 // Specific Handling for Rate Limits
                 if (this.isRateLimitError(error)) {
-                    console.warn(`🛑 Rate limit hit for ${modelName} during Tarot. Trying next...`);
+                    console.warn(`🛑 Rate limit hit for ${modelName} during Tarot. Retrying in 2s...`);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                     continue;
                 }
 
