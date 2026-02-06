@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { config } from '../../config/env';
 import { SigilState, UserProfile } from '../../types';
 import { EnergyService } from '../energy/service';
@@ -12,6 +12,7 @@ export class SigilService {
 
     constructor() {
         console.log("🕯️ SigilService: Manifesting AI with GOOGLE_API_KEY...");
+        console.log("¿Llave detectada?:", !!config.GOOGLE_API_KEY);
         this.genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
     }
 
@@ -77,7 +78,13 @@ export class SigilService {
                     console.log(`📡 Usando modelo: ${modelName}`);
                     const model = this.genAI.getGenerativeModel({
                         model: modelName,
-                        systemInstruction: systemPrompt
+                        systemInstruction: systemPrompt,
+                        safetySettings: [
+                            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        ]
                     });
 
                     const chat = model.startChat({ history: [] });
@@ -127,7 +134,15 @@ export class SigilService {
             try {
                 console.log(`🌌 Usando modelo: ${modelName}`);
                 // For Tarot, we just need a direct generation failure
-                const model = this.genAI.getGenerativeModel({ model: modelName });
+                const model = this.genAI.getGenerativeModel({
+                    model: modelName,
+                    safetySettings: [
+                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    ]
+                });
                 const result = await model.generateContent(prompt);
                 const response = result.response.text();
                 if (response) return response;
