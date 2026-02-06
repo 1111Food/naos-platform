@@ -14,6 +14,21 @@
     "src/**/*"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/test-*.ts",
+    "src/debug-*.ts",
+    "src/diag-*.ts",
+    "src/quick-test.ts",
+    "src/raw-test.ts",
+    "src/final-try.ts",
+    "src/list-models*.ts",
+    "src/full-diagnose.ts",
+    "src/diagnostic-*.ts",
+    "src/verbose-debug.ts",
+    "src/calibrate-maya.ts",
+    "src/validate-astro.ts",
+    "src/check-*.ts",
+    "src/test-*.js",
+    "src/debug-*.js"
   ]
 }

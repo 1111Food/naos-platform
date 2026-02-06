@@ -1,5 +1,5 @@
 import { EnergySnapshot, UserProfile } from '../../types';
-import { AstrologyService } from '../astrology/service';
+import { AstrologyService } from '../astrology/astroService';
 
 export class EnergyService {
 

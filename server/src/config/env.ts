@@ -12,7 +12,7 @@ if (result.error) {
 
 export const config = {
     PORT: process.env.PORT || 3001,
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+    GOOGLE_API_KEY: process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || '',
     NODE_ENV: process.env.NODE_ENV || 'development',
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
@@ -22,8 +22,8 @@ export const config = {
 };
 
 // Debug log (masked)
-if (config.GEMINI_API_KEY) {
-    console.log(`🔑 GEMINI_API_KEY loaded: ${config.GEMINI_API_KEY.substring(0, 4)}...`);
+if (config.GOOGLE_API_KEY) {
+    console.log(`🔑 GOOGLE_API_KEY loaded: ${config.GOOGLE_API_KEY.substring(0, 4)}...`);
 } else {
-    console.error("❌ GEMINI_API_KEY is missing in .env");
+    console.error("❌ GOOGLE_API_KEY is missing in environment variables");
 }

@@ -11,7 +11,7 @@ export class SigilService {
     private genAI: GoogleGenerativeAI;
 
     constructor() {
-        this.genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);
+        this.genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
     }
 
     private isRateLimitError(error: any): boolean {
@@ -67,9 +67,8 @@ export class SigilService {
     `;
 
         try {
-            // MODELOS DISPONIBLES CONFIRMADOS (User Tier: 2.0/2.5)
-            // Added stable 1.5 versions as fallbacks
-            const modelNames = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-flash-latest'];
+            // MODELOS DISPONIBLES CONFIRMADOS (User Tier: 1.5 Pro)
+            const modelNames = ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash'];
             let lastError: any = null;
 
             for (const modelName of modelNames) {
@@ -119,7 +118,7 @@ export class SigilService {
 
     async generateResponse(prompt: string, userId: string): Promise<string> {
         // Updated model list based on latest availability
-        const modelNames = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-flash-latest'];
+        const modelNames = ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash'];
         let lastError: any = null;
 
         for (const modelName of modelNames) {
