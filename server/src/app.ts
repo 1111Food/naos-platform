@@ -11,7 +11,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
     });
 
     await app.register(cors, {
-        origin: true, // During dev, reflect origin to avoid blocks
+        origin: [/localhost/, /\.vercel\.app$/], // Allow local and all Vercel domains
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
         credentials: true,

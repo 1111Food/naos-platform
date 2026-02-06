@@ -11,6 +11,7 @@ export class SigilService {
     private genAI: GoogleGenerativeAI;
 
     constructor() {
+        // fix: alineación final para producción - forzando Gemini 2.0 stability
         console.log("🕯️ SigilService: Manifesting AI with GOOGLE_API_KEY...");
         console.log("¿Llave detectada?:", !!config.GOOGLE_API_KEY);
         this.genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
@@ -70,13 +71,13 @@ export class SigilService {
 
         try {
             // MODELOS PRIORIZADOS: Se prueban variaciones de nombre para evitar el error 404
+            // MODELOS PRIORIZADOS: Se utilizan versiones de nueva generación detectadas en el listado oficial
             const modelNames = [
-                'gemini-1.5-flash-latest',
-                'models/gemini-1.5-flash-latest',
-                'gemini-1.5-flash',
-                'models/gemini-1.5-flash',
-                'gemini-1.5-pro',
-                'models/gemini-1.5-pro'
+                'models/gemini-2.0-flash',
+                'models/gemini-2.5-flash',
+                'models/gemini-2.0-flash-lite',
+                'gemini-2.0-flash',
+                'gemini-2.5-flash'
             ];
             let lastError: any = null;
 
@@ -133,13 +134,13 @@ export class SigilService {
 
     async generateResponse(prompt: string, userId: string): Promise<string> {
         // Primary stable models for Tarot - Exhaustive list to avoid 404
+        // Primary stable models for Tarot - Updated to Gemini 2.0/2.5 Flash
         const modelNames = [
-            'gemini-1.5-flash-latest',
-            'models/gemini-1.5-flash-latest',
-            'gemini-1.5-flash',
-            'models/gemini-1.5-flash',
-            'gemini-1.5-pro',
-            'models/gemini-1.5-pro'
+            'models/gemini-2.0-flash',
+            'models/gemini-2.5-flash',
+            'models/gemini-2.0-flash-lite',
+            'gemini-2.0-flash',
+            'gemini-2.5-flash'
         ];
         let lastError: any = null;
 
