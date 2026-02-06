@@ -1,0 +1,53 @@
+﻿Ô£à .env file loaded.
+­ƒöæ GEMINI_API_KEY loaded: AIza...
+!!! USER_SERVICE_LOADED !!!
+SOURCE DEBUG: async calculateProfile(birthDate,birthTime,lat,lng,utcOffset=0){console.log("!!! ZODIAC_MASTER_9000_ACTIVATED !!!");console.log(`
+\u{1F52E} NAOS PRO: Calculating Chart for ${birthDate} ${birthTime} at ${lat},${lng}`);try{const apiData=await this.fetchExternalApi(birthDate,birthTime,lat,lng,utcOffset);if(apiData){console.log("\u2705 API Success. Mapping response...");return this.mapSafeResponse(apiData)}console.warn("\u26A0\uFE0F API Unavailable. Using Local Engine Fallback.");return this.calculateLocalFallback(birthDate,birthTime,lat,lng)}catch(error){console.error("\u274C Critical Astrology Error:",error);if(error.stack)console.error(error.stack);return{sun:{name:"Sun",sign:"Aries",degree:0,absDegree:0,house:1},moon:{name:"Moon",sign:"Aries",degree:0,absDegree:0,house:1},rising:{name:"Ascendant",sign:"Aries",degree:0,absDegree:0,house:1},planets:[],houses:[],houseSystem:"Whole Sign",elements:{fire:25,earth:25,air:25,water:25},sunSign:"Aries",moonSign:"Aries",risingSign:"Aries"}}}
+­ƒÜÇ Starting Full Data Migration: Syncing elements to Supabase...
+Ô£¿ Syncing & Recalculating: cghj
+­ƒøá´©Å Hardening Profile Update for 00000000-0000-0000-0000-000000000000...
+   -> Ô£¿ Calculating Spiritual Core...
+   -> ­ƒÉå Calculating Mayan Nawal (Cholq'ij)...
+      Found: 4 Imox
+!!! ZODIAC_MASTER_9000_ACTIVATED !!!
+
+­ƒö« NAOS PRO: Calculating Chart for 1986-07-12 09:40:00 at 0,0
+node.exe : ÔÜá´©Å 
+API Unavailable. 
+Using Local Engine 
+Fallback.
+En línea: 1 
+Carácter: 1
++ & "C:\Program 
+Files/node.exe" 
+"C:\Program Files/no
+de_modules/npm/bin/ 
+...
++ ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: (ÔÜá´   
+ ©Å API Unav...n    
+gine Fallback.:    
+String) [], Rem    
+oteException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+   -> [Recalc] Starting weighted calculation...
+   -> [Recalc] Total Weight: 22, Elements: { fire: 7, earth: 9, air: 0, water: 6 }
+   -> ­ƒôª PASO FINAL: Enviando a Supabase via Node.js Proxy...
+   -> Columnas: {
+  full_name: 'cghj',
+  birth_date: '1986-07-12',
+  birth_time: '09:40:00',
+  birth_location: 'guatemala'
+}
+Ô£à PROXY SUCCESS: Supabase Upsert Success!
+   -> ­ƒôØ PRE-SAVE CHECK: Elements: { fire: 32, earth: 41, air: 0, water: 27 }
+Ô£à Sync Complete. Updated 1 profiles in local cache and Supabase.
+
