@@ -1,0 +1,52 @@
+﻿Ô£à .env file loaded.
+­ƒôí Cosmic Config: GOOGLE_API_KEY detected? YES (AIza...)
+!!! USER_SERVICE_LOADED !!!
+­ƒÜÇ Validando Bloqueo de Coordenadas (M├íximo Conservadurismo)...
+
+1. Creando perfil inicial...
+­ƒøá´©Å Hardening Profile Update for test-freeze-user...
+   -> Ô£¿ Calculating Spiritual Core...
+   -> ­ƒÉå Calculating Mayan Nawal (Cholq'ij)...
+      Found: 12 Tz'i'
+­ƒîî Astrology Core: Calculating with pinned coords [14.6349, -90.5069]
+!!! ZODIAC_MASTER_9000_ACTIVATED !!!
+
+­ƒö« NAOS PRO: Calculating Chart for 1990-01-01 12:00 at 14.6349,-90.5069
+­ƒôí Fallback Engine: Calculating for UTC 1990-01-01T18:00:00.000Z (Offset: -6)
+   -> [Recalc] Starting weighted calculation...
+   -> [Recalc] Total Weight: 22, Elements: { fire: 5, earth: 9, air: 2, water: 6 }
+   -> ­ƒôª PASO FINAL: Enviando a Supabase via Node.js Proxy...
+   -> Columnas: {
+  full_name: 'Freeze Test',
+  birth_date: '1990-01-01',
+  birth_time: '12:00',
+  birth_location: 'Guatemala City'
+}
+   -> ­ƒôØ PRE-SAVE CHECK: Elements: { fire: 23, earth: 41, air: 9, water: 27 }
+   Coords Iniciales: 14.6349, -90.5069
+
+2. Actualizando nombre (no ubicaci├│n)...
+­ƒøá´©Å Hardening Profile Update for test-freeze-user...
+   -> Ô£¿ Calculating Spiritual Core...
+   -> ­ƒÉå Calculating Mayan Nawal (Cholq'ij)...
+      Found: 12 Tz'i'
+­ƒîî Astrology Core: Calculating with pinned coords [14.6349, -90.5069]
+!!! ZODIAC_MASTER_9000_ACTIVATED !!!
+
+­ƒö« NAOS PRO: Calculating Chart for 1990-01-01 12:00 at 14.6349,-90.5069
+­ƒôí Fallback Engine: Calculating for UTC 1990-01-01T18:00:00.000Z (Offset: -6)
+   -> [Recalc] Starting weighted calculation...
+   -> [Recalc] Total Weight: 22, Elements: { fire: 5, earth: 9, air: 2, water: 6 }
+   -> ­ƒôª PASO FINAL: Enviando a Supabase via Node.js Proxy...
+   -> Columnas: {
+  full_name: 'Freeze Test Updated',
+  birth_date: '1990-01-01',
+  birth_time: '12:00',
+  birth_location: 'Guatemala City'
+}
+   -> ­ƒôØ PRE-SAVE CHECK: Elements: { fire: 23, earth: 41, air: 9, water: 27 }
+   Coords despu├®s de update: 14.6349, -90.5069
+Ô£à ├ëXITO: Las coordenadas se mantuvieron CONGELADAS.
+
+3. Verificando precisi├│n (6 decimales)...
+   Decimales detectados: 4

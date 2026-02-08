@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { AstrologyEngine } from '../modules/astrology/engine';
+import { AstrologyService } from '../modules/astrology/astroService';
 import { UserService } from '../modules/user/service';
 import { AstralDailyService } from '../modules/astrology/AstralDailyService';
 
@@ -27,45 +27,19 @@ export async function astrologyRoutes(app: FastifyInstance) {
         }
 
         try {
-            const dateStr = `${birthDate}T${birthTime}:00`;
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) {
-                return reply.status(400).send({ error: "Invalid Date/Time format." });
-            }
-
-            const chart = AstrologyEngine.calculateNatalChart(
-                date,
+            // Hot Fix: Use consolidated AstrologyService for Vercel Parity
+            const chart = await AstrologyService.calculateProfile(
+                birthDate,
+                birthTime,
                 coordinates.lat,
-                coordinates.lng
+                coordinates.lng,
+                req.body.utcOffset !== undefined ? req.body.utcOffset : -6
             );
 
-            const ZODIAC = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
-            const ascSignIndex = Math.floor(chart.ascendant / 30);
-            const ascSign = ZODIAC[ascSignIndex];
-            const ascDegree = chart.ascendant % 30;
-
-            const rising = {
-                name: 'Ascendant',
-                sign: ascSign,
-                degree: ascDegree,
-                absDegree: chart.ascendant,
-                house: 1
-            };
-
-            const houses = chart.houses.map(h => h.absDegree);
-            const elements = chart.elements;
-
             const response = {
-                sun: chart.planets.find(p => p.name === 'Sun'),
-                moon: chart.planets.find(p => p.name === 'Moon'),
-                rising: rising,
-                planets: chart.planets,
-                houses: houses,
-                houseSystem: 'Whole Sign',
-                elements: elements,
-                sunSign: chart.planets.find(p => p.name === 'Sun')?.sign || 'Aries',
-                moonSign: chart.planets.find(p => p.name === 'Moon')?.sign || 'Aries',
-                risingSign: ascSign
+                ...chart,
+                // Legacy compatibility for frontend UI
+                elemental_balance: chart.elements
             };
 
             await UserService.updateProfile(currentUserId, {

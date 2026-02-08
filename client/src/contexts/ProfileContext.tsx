@@ -12,6 +12,11 @@ export interface UserProfile {
     numerology?: any;
     fengShui?: any;
     mayan?: any;
+    nawal_maya?: string;
+    nawal_tono?: number;
+    chinese_animal?: string;
+    chinese_element?: string;
+    chinese_birth_year?: number;
     sigil_url?: string;
     subscription: {
         plan: 'FREE' | 'PREMIUM';

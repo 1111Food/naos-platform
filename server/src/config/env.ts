@@ -1,14 +1,8 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load .env from root
-const result = dotenv.config({ path: path.join(__dirname, '../../../.env') });
-
-if (result.error) {
-    console.warn("⚠️  .env file not found or failed to load.");
-} else {
-    console.log("✅ .env file loaded.");
-}
+// Load .env from root (Safe for local, harmless in Vercel)
+dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
 export const config = {
     PORT: process.env.PORT || 3001,

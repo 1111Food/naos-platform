@@ -1,3 +1,5 @@
+import { NORMALIZED_CITIES } from './cityDb';
+
 interface GeoCache {
     coordinates: Record<string, { lat: number, lng: number }>;
     timezones: Record<string, number>;
@@ -10,15 +12,26 @@ const cache: GeoCache = {
 
 export class GeocodingService {
     static async getCoordinates(city: string, state: string, country: string): Promise<{ lat: number, lng: number }> {
-        const query = `${city}, ${state}, ${country}`.toLowerCase().trim();
+        const query = `${city}, ${country}`.toLowerCase().trim();
+        const fullQuery = `${city}, ${state}, ${country}`.toLowerCase().trim();
 
-        // 1. Check Cache
-        if (cache.coordinates[query]) {
-            console.log(`🎯 Geocoding Cache Hit: ${query}`);
-            return cache.coordinates[query];
+        // 1. Check Static Normalized DB first
+        if (NORMALIZED_CITIES[query]) {
+            console.log(`🎯 Geocoding NORMALIZED Hit: ${query}`);
+            return NORMALIZED_CITIES[query];
+        }
+        if (NORMALIZED_CITIES[fullQuery]) {
+            console.log(`🎯 Geocoding NORMALIZED Hit: ${fullQuery}`);
+            return NORMALIZED_CITIES[fullQuery];
         }
 
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+        // 2. Check Cache
+        if (cache.coordinates[fullQuery]) {
+            console.log(`🎯 Geocoding Cache Hit: ${fullQuery}`);
+            return cache.coordinates[fullQuery];
+        }
+
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fullQuery)}&format=json&limit=1`;
 
         try {
             console.log(`🌐 Geocoding API Request: ${query}...`);
@@ -30,17 +43,19 @@ export class GeocodingService {
             const data: any = await response.json();
 
             if (data && data.length > 0) {
+                // LOCK: Force 6 decimal precision for maximum stability
                 const result = {
-                    lat: parseFloat(data[0].lat),
-                    lng: parseFloat(data[0].lon)
+                    lat: Math.round(parseFloat(data[0].lat) * 1000000) / 1000000,
+                    lng: Math.round(parseFloat(data[0].lon) * 1000000) / 1000000
                 };
+                console.log(`🔒 Geocoding LOCK Applied: ${fullQuery} -> ${result.lat}, ${result.lng}`);
                 // Store in Cache
-                cache.coordinates[query] = result;
+                cache.coordinates[fullQuery] = result;
                 return result;
             }
 
-            console.warn(`⚠️ Geocoding failed for ${query}, using fallback.`);
-            return { lat: 14.6349, lng: -90.5069 }; // Guatemala City fallback
+            console.warn(`⚠️ Geocoding failed for ${fullQuery}, using frozen fallback.`);
+            return { lat: 14.634900, lng: -90.506900 }; // Guatemala City frozen fallback
         } catch (error) {
             console.error("❌ Geocoding Error:", error);
             return { lat: 14.6349, lng: -90.5069 };

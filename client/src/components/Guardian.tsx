@@ -6,7 +6,7 @@ import { useGuardianState } from '../contexts/GuardianContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface GuardianProps {
-    view: 'LANDING' | 'ONBOARDING' | 'TEMPLE' | 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'SYNASTRY' | 'MAYA' | 'TRANSITS';
+    view: 'LANDING' | 'ONBOARDING' | 'TEMPLE' | 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'SYNASTRY' | 'MAYA' | 'TRANSITS' | 'ORIENTAL';
 }
 
 export const Guardian: React.FC<GuardianProps> = ({ view }) => {
@@ -24,7 +24,7 @@ export const Guardian: React.FC<GuardianProps> = ({ view }) => {
     const isHidden = view === 'LANDING' || view === 'ONBOARDING';
     const isResting = view === 'TEMPLE';
     const isChatting = view === 'CHAT';
-    const isManifesting = ['ASTRO', 'NUMERO', 'TAROT', 'FENGSHUI', 'SYNASTRY', 'MAYA', 'TRANSITS'].includes(view);
+    const isManifesting = ['ASTRO', 'NUMERO', 'TAROT', 'FENGSHUI', 'SYNASTRY', 'MAYA', 'TRANSITS', 'ORIENTAL'].includes(view);
 
     // Interaction states
     const isListening = state === 'LISTENING';
@@ -33,6 +33,9 @@ export const Guardian: React.FC<GuardianProps> = ({ view }) => {
     // Scroll-reactive transforms (base)
     const scrollScale = Math.max(0.92, 1 - scrollY / 1000);
     const scrollOpacity = Math.max(0.85, 1 - scrollY / 2000);
+
+    // Cache busting reference
+    const assetVersion = React.useMemo(() => new Date().getTime(), []);
 
     return (
         <AnimatePresence>
@@ -85,32 +88,20 @@ export const Guardian: React.FC<GuardianProps> = ({ view }) => {
                             )}
                         />
 
-                        {/* Main Guardian Identity */}
+                        {/* Main Guardian Identity - PRIORITIZED VIDEO */}
                         <div className="relative w-full h-full">
                             <video
-                                key={timeMode}
-                                src={timeMode === 'DAY' ? "/Guardian-Day.mp4" : "/Guardian-Night.mp4"}
+                                key={`${timeMode}-${assetVersion}`}
+                                src={timeMode === 'DAY' ? `/Guardian-Day.mp4?v=${assetVersion}` : `/Guardian-Night.mp4?v=${assetVersion}`}
                                 autoPlay
                                 loop
                                 muted
                                 playsInline
+                                preload="auto"
                                 className={cn(
                                     "w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(255,210,125,0.4)] transition-opacity duration-1000",
                                     isResponding && "drop-shadow-[0_0_40px_rgba(255,255,255,0.6)]"
                                 )}
-                                onError={(e) => {
-                                    const img = e.currentTarget.parentElement?.querySelector('img');
-                                    if (img) {
-                                        e.currentTarget.style.display = 'none';
-                                        img.style.display = 'block';
-                                    }
-                                }}
-                            />
-                            <img
-                                src={timeMode === 'DAY' ? "/sigil-day.png" : "/sigil-night.png"}
-                                alt="Guardian Fallback"
-                                style={{ display: 'none' }}
-                                className="w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(255,210,125,0.4)]"
                             />
 
                             {/* Internal Glow - Pulses when responding */}

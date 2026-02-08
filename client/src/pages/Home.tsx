@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Activity, Star, Triangle, MapPin } from 'lucide-react';
+import { Sun, Activity, Star, Triangle, MapPin, Scroll } from 'lucide-react';
 import { Player } from '@remotion/player';
 import { TempleAura } from '../remotion/TempleAura';
 import { cn } from '../lib/utils';
@@ -8,7 +8,7 @@ import { useEnergy } from '../hooks/useEnergy';
 import { useProfile } from '../hooks/useProfile';
 
 interface HomeProps {
-    onSelectFeature: (feature: 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'MAYA') => void;
+    onSelectFeature: (feature: 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'MAYA' | 'ORIENTAL' | 'TRANSITS') => void;
     activeFeature?: string;
 }
 
@@ -54,6 +54,15 @@ export const Home: React.FC<HomeProps> = ({ onSelectFeature }) => {
             border: 'border-orange-500/30',
             bg: 'bg-orange-500/5'
         },
+        {
+            id: 'ORIENTAL',
+            label: 'Sabiduría Oriental',
+            icon: Scroll,
+            desc: 'Ciclo Ancestral',
+            color: 'text-rose-300',
+            border: 'border-rose-500/30',
+            bg: 'bg-rose-500/5'
+        },
     ];
 
     return (
@@ -94,8 +103,8 @@ export const Home: React.FC<HomeProps> = ({ onSelectFeature }) => {
                     </p>
                 </div>
 
-                {/* 5) MÓDULOS COMO ARTEFACTOS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full px-6 md:px-0 pb-10 max-w-6xl mx-auto">
+                {/* 5) MÓDULOS COMO ARTEFACTOS (GRID DE 5 PILARES) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full px-6 md:px-0 pb-10 max-w-7xl mx-auto">
                     {modules.map((item, idx) => (
                         <button
                             key={item.id}
@@ -124,6 +133,8 @@ export const Home: React.FC<HomeProps> = ({ onSelectFeature }) => {
                         </button>
                     ))}
                 </div>
+
+                {/* Sabiduría Oriental is now part of the grid above */}
 
             </main>
 

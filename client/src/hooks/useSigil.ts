@@ -32,7 +32,10 @@ export function useSigil(userName?: string) {
             const response = await fetch(endpoints.chat, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({
+                    message: text,
+                    localTimestamp: new Date().toISOString()
+                })
             });
 
             if (!response.ok) {

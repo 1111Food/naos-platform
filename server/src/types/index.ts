@@ -26,6 +26,10 @@ export interface UserProfile {
     mayan?: MayanNawal;
     nawal_maya?: string;
     nawal_tono?: number;
+    // Chinese Astrology Expansion
+    chinese_animal?: string;
+    chinese_element?: string;
+    chinese_birth_year?: number;
     sigil_url?: string;
 }
 
@@ -132,4 +136,38 @@ export interface EnergySnapshot {
     dominantElement: 'FIRE' | 'EARTH' | 'AIR' | 'WATER';
     guidance: string; // Daily proverb/summary
     moonPhase: string;
+    // Sigil 2.0: Daily Wisdom
+    mayan?: {
+        nawal: string;
+        tone: number;
+        meaning: string;
+    };
+    fengShui?: {
+        dailyStar: number;
+        energy: string;
+    };
+}
+
+// Sigil 2.0: Biblia de Datos (Canon Energetic Profile)
+export interface UserEnergeticProfile {
+    western: {
+        sunSign: string;
+        moonSign: string;
+        risingSign: string;
+        elements: AstrologyProfile['elements'];
+    };
+    chinese: {
+        animal: string;
+        element: string;
+        birthYear: number;
+    };
+    mayan: {
+        nawal: string;
+        tone: number;
+        meaning: string;
+    };
+    numerology: {
+        lifePath: number;
+        pinnacles: number[];
+    };
 }

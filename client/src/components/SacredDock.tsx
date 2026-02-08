@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Flower2, Heart, Wind } from 'lucide-react';
+import { Star, Flower2, Wind, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
 
@@ -12,7 +12,7 @@ export const SacredDock: React.FC<SacredDockProps> = ({ activeView, onNavigate }
     const items = [
         { id: 'TEMPLE', icon: Star, label: 'Templo', color: 'text-amber-400' },
         { id: 'TAROT', icon: Flower2, label: 'Tarot', color: 'text-rose-400' },
-        { id: 'SYNASTRY', icon: Heart, label: 'Almas', color: 'text-pink-400' },
+        { id: 'SYNASTRY', icon: Users, label: 'Almas', color: 'text-purple-400' },
         { id: 'FENGSHUI', icon: Wind, label: 'Feng Shui', color: 'text-emerald-400' },
         { id: 'CHAT', icon: SigilIcon, label: 'Sigil', color: 'text-amber-500' },
     ];
@@ -20,9 +20,7 @@ export const SacredDock: React.FC<SacredDockProps> = ({ activeView, onNavigate }
     return (
         <nav className={cn(
             "fixed z-[100] transition-all duration-500",
-            // Universal Mobile: Bottom Bar (Standard for all mobile)
             "bottom-0 left-0 right-0 h-auto px-2 pb-[env(safe-area-inset-bottom)] glass-sidebar border-t border-white/10 rounded-t-2xl md:border-t-0",
-            // Desktop: Vertical Sidebar
             "md:left-6 md:top-1/2 md:-translate-y-1/2 md:bottom-auto md:right-auto md:h-auto md:max-h-[600px] md:px-4 md:py-8 md:rounded-full md:border-r"
         )}>
             <div className="flex md:flex-col items-center justify-around md:justify-center gap-2 md:gap-6 py-3 md:py-0">
@@ -49,7 +47,6 @@ export const SacredDock: React.FC<SacredDockProps> = ({ activeView, onNavigate }
                                 {item.label}
                             </span>
 
-                            {/* Floating Label (Desktop Only) */}
                             <span className="hidden md:block absolute left-full ml-4 px-3 py-1 bg-black/80 border border-white/10 rounded-lg text-[10px] uppercase tracking-widest text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
                                 {item.label}
                             </span>

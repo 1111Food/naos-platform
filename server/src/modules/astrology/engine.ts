@@ -66,9 +66,10 @@ export class AstrologyEngine {
         // Local Sidereal Time
         const lst = (gst + lng / 15.0) % 24;
 
-        // Obliquity of the Ecliptic (approx 23.43...)
-        // Better to get it from library if possible, but constant is fine for astrology
-        const eps = 23.4392911;
+        // Obliquity of the Ecliptic (Dynamic for higher precision)
+        // High-precision formula for Mean Obliquity:
+        const t = (time.date.getTime() / 1000 - 946728000) / 3155760000; // Centuries from J2000
+        const eps = 23.4392911 - (46.8150 * t) / 3600 - (0.00059 * t * t) / 3600 + (0.001813 * t * t * t) / 3600;
         const epsRad = eps * Math.PI / 180.0;
 
         // RAMC in degrees = LST * 15
@@ -77,26 +78,10 @@ export class AstrologyEngine {
         const latRad = lat * Math.PI / 180.0;
 
         // Calculate MC (Medium Coeli)
-        // tan(MC) = tan(RAMC) / cos(eps)  ... roughly, but needs quadrant handling
-        // Using atan2 for correct quadrant:
-        // x = cos(RAMC) * cos(eps) should be denominator?
-        // Formula: tan(MC) = tan(RAMC)/cos(obl) -> atan2(y, x)
-        // y = sin(RAMC)
-        // x = cos(RAMC) * cos(eps) since tan=sin/cos
-        // BUT MC is usually 90deg from Ascendant's underlying framework?
-        // Let's use standard formula:
-        // tan(MC) = sin(RAMC) / (cos(RAMC) * cos(eps)) ? No
-        // MC = atan2(sin(RAMC), cos(RAMC)*cos(eps)) 
-
         let mcRad = Math.atan2(Math.sin(ramcRad), Math.cos(ramcRad) * Math.cos(epsRad));
-        let mc = (mcRad * 180.0 / Math.PI + 360) % 360; // Normalize 0-360
+        let mc = (mcRad * 180.0 / Math.PI + 360) % 360;
 
-        // Ascendant
-        // tan(Asc) = cos(RAMC) / - (sin(RAMC)*cos(eps) + tan(lat)*sin(eps))
-        // Asc = atan2(y, x)
-        // y = cos(RAMC)
-        // x = - (sin(RAMC) * cos(eps) + Math.tan(latRad) * Math.sin(epsRad))
-
+        // Ascendant Calculation
         const ascY = Math.cos(ramcRad);
         const ascX = - (Math.sin(ramcRad) * Math.cos(epsRad) + Math.tan(latRad) * Math.sin(epsRad));
         let ascRad = Math.atan2(ascY, ascX);
@@ -121,10 +106,11 @@ export class AstrologyEngine {
 
         const planets: PlanetPosition[] = [];
 
-        // Calc House System (Whole Sign for simplicity & robust "Real" astrology)
-        // House 1 starts at 0 degrees of the Rising Sign.
-        // House 2 starts at 0 degrees of the next sign...
-        // This is easiest to implement accurately without complex Placidus tables.
+        // Calc House System (Equal House System)
+        // House 1 starts at the exact degree of the Ascendant.
+        // House 2 starts at Asc + 30 degrees, and so on.
+        // This is a professional system that avoids "off-by-one sign" errors 
+        // associated with Whole Sign when used as a fallback.
 
         const risingSignIndex = Math.floor(asc / 30);
 
@@ -142,40 +128,40 @@ export class AstrologyEngine {
             // `Astronomy.Equator` returns {ra, dec, dist, vec}. The 'vec' property is the vector.
             const ecl = Astronomy.Ecliptic(eq.vec);
 
-            // Longitude is what we want (0-360 along zodiac)
             const absDeg = ecl.elon;
-
-            // Determine Sign
             const signIdx = Math.floor(absDeg / 30);
             const sign = ZODIAC_SIGNS[signIdx];
             const deg = absDeg % 30;
+            const house = Math.floor(((absDeg - asc + 360) % 360) / 30) + 1;
 
-            // Determine House (Whole Sign)
-            // Offset from Rising Sign
-            // If Rising is Aries (0), and Planet is Taurus (1). House = (1 - 0) + 1 = 2.
-            // If Rising is Pisces (11), Planet is Aries (0). House = (0 - 11) -> -11 + 12 = 1. + 1 = 2nd House relative? No.
-            // House = (PlanetSignIdx - RisingSignIdx + 12) % 12 + 1
-            const house = (signIdx - risingSignIndex + 12) % 12 + 1;
+            // Calculate speed for retrograde detection (difference over 6 hours)
+            const time6h = time.AddDays(0.25);
+            const eq6h = Astronomy.Equator(b.body, time6h, observer, true, true);
+            const ecl6h = Astronomy.Ecliptic(eq6h.vec);
+            const speed = (ecl6h.elon - ecl.elon + 360) % 360;
+            // If speed is large (e.g. crossing 360->0 or Moon movement), handle overflow
+            const correctedSpeed = speed > 180 ? speed - 360 : speed;
 
             planets.push({
                 name: b.name,
                 sign,
-                degree: Math.round(deg * 100) / 100, // 2 decimals
+                degree: Math.round(deg * 100) / 100,
                 absDegree: absDeg,
                 house,
-                retrograde: false // TODO: Calculate speed to determine retrograde
+                retrograde: correctedSpeed < 0
             });
         });
 
-        // Houses (Whole Sign Cusp is 0 deg of each sign)
+        // Houses (Equal House System)
         const houses: HouseCusp[] = [];
         for (let i = 1; i <= 12; i++) {
-            const signIdx = (risingSignIndex + i - 1) % 12;
+            const houseStart = (asc + (i - 1) * 30) % 360;
+            const signIdx = Math.floor(houseStart / 30);
             houses.push({
                 house: i,
                 sign: ZODIAC_SIGNS[signIdx],
-                degree: 0,
-                absDegree: signIdx * 30
+                degree: houseStart % 30,
+                absDegree: houseStart
             });
         }
 

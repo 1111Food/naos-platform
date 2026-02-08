@@ -1,4 +1,5 @@
 import { EnergySnapshot, UserProfile } from '../../types';
+import { MayanCalculator } from '../../utils/mayaCalculator';
 import { AstrologyService } from '../astrology/astroService';
 
 export class EnergyService {
@@ -24,12 +25,28 @@ export class EnergyService {
         // 4. Guidance
         const guidance = this.getDailyGuidance(dominantElement, dayNightMode);
 
+        // 5. Maya Wisdom of the Day (Real calculation)
+        const dateStr = date.toISOString().split('T')[0];
+        const mayanDaily = MayanCalculator.calculate(dateStr);
+
+        // 6. Feng Shui Daily Star (Simplified Cycle)
+        const dailyStar = ((date.getDate() + date.getMonth()) % 9) + 1;
+
         return {
-            date: date.toISOString().split('T')[0],
+            date: dateStr,
             transitScore,
             dominantElement,
             guidance,
-            moonPhase: 'Waxing Crescent' // Placeholder
+            moonPhase: 'Waxing Crescent', // Placeholder
+            mayan: {
+                nawal: mayanDaily.nawal_maya,
+                tone: mayanDaily.nawal_tono,
+                meaning: mayanDaily.meaning
+            },
+            fengShui: {
+                dailyStar,
+                energy: dailyStar % 2 === 0 ? 'YIN' : 'YANG'
+            }
         };
     }
 

@@ -13,6 +13,7 @@ import { SacredDock } from './components/SacredDock';
 import { NawalView } from './components/NawalView';
 import { EnergiaDelDia } from './pages/EnergiaDelDia';
 import { SigilWidget } from './components/SigilWidget';
+import { SabiduriaOriental } from './components/SabiduriaOriental';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { EtherBackground } from './components/EtherBackground';
 import { Guardian } from './components/Guardian';
@@ -22,7 +23,7 @@ import { useEnergy } from './hooks/useEnergy';
 import { useProfile } from './hooks/useProfile';
 import { useSubscription } from './hooks/useSubscription';
 
-type ViewState = 'LANDING' | 'ONBOARDING' | 'TEMPLE' | 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'SYNASTRY' | 'MAYA' | 'TRANSITS';
+type ViewState = 'LANDING' | 'ONBOARDING' | 'TEMPLE' | 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'SYNASTRY' | 'MAYA' | 'TRANSITS' | 'ORIENTAL';
 
 function App() {
   const { energy } = useEnergy();
@@ -45,8 +46,6 @@ function App() {
 
     window.addEventListener('scroll', handleScroll);
 
-    // Removed force reset to prevent mobile loops
-
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -64,13 +63,12 @@ function App() {
       console.log("App: Profile update finished. Navigating to Temple.");
       setActiveView('TEMPLE');
 
-      // Success Notification
       setSigilNotification(`¡Saludos, ${data.name}! He guardado tu esencia en el cosmos. Tu Pináculo Cotidiano y tu Carta Astral están listos.`);
       setTimeout(() => setSigilNotification(null), 10000);
     } catch (e) {
       console.error("Ritual profile update failed", e);
       setSigilNotification("Hubo un error guardando tus datos. Revisa la conexión.");
-      setActiveView('TEMPLE'); // Still move but with error
+      setActiveView('TEMPLE');
     }
   };
 
@@ -98,6 +96,12 @@ function App() {
         return <ChatInterface />;
       case 'TRANSITS':
         return <EnergiaDelDia onOpenRitual={() => setActiveView('ONBOARDING')} />;
+      case 'ORIENTAL':
+        return (
+          <div className="w-full max-w-4xl mx-auto px-4 py-12">
+            <SabiduriaOriental profile={profile} />
+          </div>
+        );
       default:
         return <Home onSelectFeature={setActiveView} activeFeature={activeView} />;
     }
@@ -111,7 +115,6 @@ function App() {
 
         <div className="relative z-10 min-h-screen flex flex-col animate-in fade-in duration-1000">
 
-          {/* Ethereal Header Layer */}
           {activeView !== 'LANDING' && activeView !== 'ONBOARDING' && (
             <header
               className="fixed top-0 left-0 right-0 pt-[calc(1.5rem+env(safe-area-inset-top))] px-6 pb-6 flex justify-between items-center w-full z-50 pointer-events-none transition-opacity duration-300 pointer-events-auto"
@@ -131,7 +134,6 @@ function App() {
                 <h1 className="text-xl font-serif font-light tracking-[0.2em] text-white/80 select-none">NAOS</h1>
               </div>
 
-              {/* Emana Navigation (Rituals) */}
               <div className="hidden lg:flex items-center gap-8 ml-12">
                 <button onClick={() => setActiveView('ASTRO')} className="text-[10px] uppercase tracking-[0.3em] text-white/30 hover:text-white/80 transition-all font-light">Carta Astral</button>
                 <button onClick={() => setActiveView('NUMERO')} className="text-[10px] uppercase tracking-[0.3em] text-white/30 hover:text-white/80 transition-all font-light">Pináculo</button>
@@ -157,12 +159,10 @@ function App() {
             {renderContent()}
           </main>
 
-          {/* Sacred Dock Navigation */}
           {activeView !== 'LANDING' && activeView !== 'ONBOARDING' && (
             <SacredDock activeView={activeView} onNavigate={setActiveView} />
           )}
 
-          {/* Footer info (only in temple views) */}
           {activeView !== 'LANDING' && activeView !== 'ONBOARDING' && activeView !== 'CHAT' && energy && (
             <footer className="p-8 mt-auto text-center border-t border-white/5">
               <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 text-[10px] uppercase tracking-[0.2em] text-white/40">
@@ -182,7 +182,6 @@ function App() {
               </div>
             </footer>
           )}
-          {/* Floating Sigil Assistant - Hidden in main CHAT view to avoid overlap */}
           {activeView !== 'CHAT' && (
             <SigilWidget onNavigate={setActiveView} externalMessage={sigilNotification} />
           )}

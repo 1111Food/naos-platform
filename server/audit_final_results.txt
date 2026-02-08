@@ -1,0 +1,24 @@
+﻿Ô£à .env file loaded.
+­ƒôí Cosmic Config: GOOGLE_API_KEY detected? YES (AIza...)
+­ƒÜÇ Iniciando Auditor├¡a de Precisi├│n Astral...
+
+--- Prueba Fallback Local ---
+­ƒôí Fallback Engine: Calculating for UTC 1990-07-29T15:00:00.000Z (Offset: -5)
+   -> [Recalc] Starting weighted calculation...
+   -> [Recalc] Total Weight: 22, Elements: { fire: 4, earth: 10, air: 0, water: 8 }
+Ascendente Absoluto: 171.6813┬░
+Ascendente: Virgo 21.68┬░
+Luna: Scorpio 7.19┬░ (Casa 2)
+Ô£à ├ëXITO: El Ascendente est├í en Virgo como se esperaba.
+
+Planetas:
+- Sun: Leo 6.11┬░ (Casa 11)
+- Moon: Scorpio 7.19┬░ (Casa 2)
+- Mercury: Virgo 0.11┬░ (Casa 12)
+- Venus: Cancer 11.30┬░ (Casa 10)
+- Mars: Taurus 11.03┬░ (Casa 8)
+- Jupiter: Cancer 25.58┬░ (Casa 11)
+- Saturn: Capricorn 20.81┬░ (Casa 4)
+- Uranus: Capricorn 6.33┬░ (Casa 4)
+- Neptune: Capricorn 12.43┬░ (Casa 4)
+- Pluto: Scorpio 14.85┬░ (Casa 2)

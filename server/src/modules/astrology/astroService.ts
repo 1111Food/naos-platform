@@ -18,7 +18,7 @@ export class AstrologyService {
             }
 
             console.warn("⚠️ API Unavailable. Using Local Engine Fallback.");
-            return this.calculateLocalFallback(birthDate, birthTime, lat, lng);
+            return this.calculateLocalFallback(birthDate, birthTime, lat, lng, utcOffset);
 
         } catch (error: any) {
             console.error("❌ Critical Astrology Error:", error);
@@ -110,11 +110,21 @@ export class AstrologyService {
         return this.recalculateElementsWithWeights(planets, rising, houses, 'Placidus');
     }
 
-    private static calculateLocalFallback(birthDate: string, birthTime: string, lat: number, lng: number): AstrologyProfile {
-        const timeParts = birthTime.split(':');
-        const formattedTime = timeParts.length === 2 ? `${birthTime}:00` : birthTime;
-        const dateStr = `${birthDate}T${formattedTime}`;
-        const chart = AstrologyEngine.calculateNatalChart(new Date(dateStr), lat, lng);
+    private static calculateLocalFallback(birthDate: string, birthTime: string, lat: number, lng: number, utcOffset = 0): AstrologyProfile {
+        const [year, month, day] = birthDate.split('-').map(Number);
+        const timeParts = birthTime.split(':').map(Number);
+        const hour = timeParts[0] || 0;
+        const min = timeParts[1] || 0;
+        const sec = timeParts[2] || 0;
+
+        // Construct UTC Date: UTC = Local - Offset
+        // Example: 10:00 AM in UTC-6 -> 10 - (-6) = 16:00 UTC
+        const date = new Date(Date.UTC(year, month - 1, day, hour, min, sec));
+        const utcTimestamp = date.getTime() - (utcOffset * 3600 * 1000);
+        const correctedDate = new Date(utcTimestamp);
+
+        console.log(`📡 Fallback Engine: Calculating for UTC ${correctedDate.toISOString()} (Offset: ${utcOffset})`);
+        const chart = AstrologyEngine.calculateNatalChart(correctedDate, lat, lng);
 
         const rising = {
             name: 'Ascendant',

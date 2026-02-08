@@ -40,9 +40,9 @@ export async function apiRoutes(app: FastifyInstance) {
     });
 
     // Chat
-    app.post<{ Body: { message: string } }>('/api/chat', async (req, reply) => {
-        const { message } = req.body;
-        return sigilService.processMessage(currentUserId, message);
+    app.post<{ Body: { message: string, localTimestamp?: string } }>('/api/chat', async (req, reply) => {
+        const { message, localTimestamp } = req.body;
+        return sigilService.processMessage(currentUserId, message, localTimestamp);
     });
 
     // Energy

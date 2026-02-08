@@ -8,6 +8,7 @@ import { FengShuiService } from '../astrology/fengshui';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '../../config/env';
 import { MayanCalculator } from '../../utils/mayaCalculator';
+import { ChineseAstrology } from '../../utils/chineseAstrology';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const PROFILES_FILE = path.join(DATA_DIR, 'profiles.json');
@@ -57,7 +58,7 @@ export class UserService {
             // Reconstruct profile prioritizing discrete columns (Lovable Sync)
             const baseProfile = (data.profile_data || {}) as Partial<UserProfile>;
 
-            const dbProfile = {
+            const dbProfile: UserProfile = {
                 ...baseProfile,
                 id: data.id,
                 name: data.full_name || baseProfile.name || 'Viajero cosmico',
@@ -66,13 +67,18 @@ export class UserService {
                 birthCity: data.birth_location || baseProfile.birthCity || '',
                 astrology: data.natal_chart || baseProfile.astrology || undefined,
                 sigil_url: data.sigil_url || baseProfile.sigil_url || undefined,
+                // Protocol: Guarantee high precision coordinates and offset reconstruction
+                coordinates: baseProfile.coordinates || { lat: 14.634900, lng: -90.506900 },
+                utcOffset: baseProfile.utcOffset !== undefined ? baseProfile.utcOffset : -6,
                 // Ensure required base fields
                 birthPlace: baseProfile.birthPlace || '',
                 birthState: baseProfile.birthState || '',
-                birthCountry: baseProfile.birthCountry || '',
-                coordinates: baseProfile.coordinates || { lat: 0, lng: 0 },
+                birthCountry: baseProfile.birthCountry || 'Guatemala',
                 subscription: baseProfile.subscription || { plan: 'FREE', features: [] }
             };
+
+            // SYNC LOCK: In production (Vercel), we MUST trust the DB offset
+            console.log(`📡 Vercel Parity: Restoring profile for ${dbProfile.name} (Offset: ${dbProfile.utcOffset})`);
 
             // HOT FIX: Merge with local cache to preserve non-synced ritual fields
             if (Object.keys(profilesCache).length === 0) await this.loadProfiles();
@@ -111,13 +117,27 @@ export class UserService {
 
         let updated = { ...current, ...data };
 
-        // 2. Geocoding & Timezone
-        const locationChanged = data.birthCity || data.birthCountry || data.birthState;
-        if (locationChanged || !updated.coordinates) {
+        // 2. Geocoding & Timezone (Protocol: Geography Hardening)
+        const locationStringsChanged = (data.birthCity && data.birthCity !== current.birthCity) ||
+            (data.birthCountry && data.birthCountry !== current.birthCountry) ||
+            (data.birthState && data.birthState !== current.birthState);
+
+        const hasValidCoords = updated.coordinates &&
+            (updated.coordinates.lat !== 0 || updated.coordinates.lng !== 0) &&
+            (updated.coordinates.lat !== 40.7128); // Default NYC check
+
+        if (locationStringsChanged || !hasValidCoords) {
             if (updated.birthCity && updated.birthCountry) {
+                console.log(`🌍 Geography Protocol: Resolving final coordinates for ${updated.birthCity}...`);
                 const coords = await GeocodingService.getCoordinates(updated.birthCity, updated.birthState || '', updated.birthCountry);
-                updated.coordinates = coords;
-                updated.utcOffset = await GeocodingService.getTimezoneOffset(coords.lat, coords.lng);
+
+                // FINAL FIX: Ensure precision and immutability
+                updated.coordinates = {
+                    lat: Math.round(coords.lat * 1000000) / 1000000,
+                    lng: Math.round(coords.lng * 1000000) / 1000000
+                };
+                updated.utcOffset = await GeocodingService.getTimezoneOffset(updated.coordinates.lat, updated.coordinates.lng);
+                console.log(`🔒 Geography LOCK Persisted: ${updated.coordinates.lat}, ${updated.coordinates.lng}`);
             }
         }
 
@@ -149,14 +169,15 @@ export class UserService {
             console.log(`      Found: ${updated.mayan.tone} ${updated.mayan.kicheName}`);
         }
 
-        // Astrology (Offline)
+        // Astrology (Offline) - Strictly using persisted/locked coordinates
         try {
+            console.log(`🌌 Astrology Core: Calculating with pinned coords [${updated.coordinates.lat}, ${updated.coordinates.lng}]`);
             const astro = await AstrologyService.calculateProfile(
                 updated.birthDate,
                 updated.birthTime,
                 updated.coordinates.lat,
                 updated.coordinates.lng,
-                updated.utcOffset || -6
+                updated.utcOffset !== undefined ? updated.utcOffset : -6
             );
             // @ts-ignore
             astro.elemental_balance = astro.elements;
@@ -167,6 +188,19 @@ export class UserService {
 
         // Feng Shui
         updated.fengShui = FengShuiProfileService.calculateProfile(updated.birthDate);
+
+        // SILENT EXPANSION: Chinese Astrology
+        if (updated.birthDate) {
+            console.log("   -> 🐉 Calculating Chinese Wisdom...");
+            const chinese = ChineseAstrology.calculate(updated.birthDate);
+            updated.chinese_animal = chinese.animal;
+            updated.chinese_element = chinese.element;
+            updated.chinese_birth_year = chinese.birthYear;
+
+            // Persist description in profile_data for UI flexibility
+            // @ts-ignore
+            updated.chinese_description = chinese.description;
+        }
 
         // 4. Sigil Asset (Connected logic)
         if (!updated.sigil_url) {
@@ -204,7 +238,11 @@ export class UserService {
                     birth_time: updated.birthTime || null,
                     birth_location: updated.birthCity || null,
                     natal_chart: updated.astrology || null,
-                    sigil_url: updated.sigil_url || null
+                    sigil_url: updated.sigil_url || null,
+                    chinese_animal: updated.chinese_animal || null,
+                    chinese_element: updated.chinese_element || null,
+                    chinese_birth_year: updated.chinese_birth_year || null,
+                    profile_data: updated // FIXED: Persist all fields (coords, offset, etc) for Vercel parity
                 });
 
             if (error) {
