@@ -63,7 +63,6 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                         e.stopPropagation();
                         onOpenChat?.();
                     }}
-                    style={{ isolation: 'isolate' }}
                 >
                     {/* Sacred Breathing & Floating Wrapper */}
                     <motion.div
@@ -107,9 +106,9 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                                 preload="auto"
                                 className={cn(
                                     "w-full h-full object-contain transition-opacity duration-1000 bg-transparent relative z-10",
-                                    isResponding && "brightness-125"
+                                    isResponding && "brightness-150"
                                 )}
-                                style={{ mixBlendMode: 'screen' }}
+                                style={{ mixBlendMode: 'screen', backgroundColor: 'transparent' }}
                             />
 
                             {/* Internal Glow - Pulses when responding */}
