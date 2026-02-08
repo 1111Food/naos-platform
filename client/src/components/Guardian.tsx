@@ -63,6 +63,7 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                         e.stopPropagation();
                         onOpenChat?.();
                     }}
+                    style={{ mixBlendMode: 'plus-lighter', transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
                 >
                     {/* Sacred Breathing & Floating Wrapper */}
                     <motion.div
@@ -95,7 +96,7 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                         />
 
                         {/* Main Guardian Identity - PRIORITIZED VIDEO */}
-                        <div className="relative w-full h-full">
+                        <div className="relative w-full h-full overflow-hidden">
                             <video
                                 key={`${timeMode}-${assetVersion}`}
                                 src={timeMode === 'DAY' ? `/Guardian-Day.mp4?v=${assetVersion}` : `/Guardian-Night.mp4?v=${assetVersion}`}
@@ -105,32 +106,33 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                                 playsInline
                                 preload="auto"
                                 className={cn(
-                                    "w-full h-full object-contain transition-opacity duration-1000 bg-transparent relative z-10",
+                                    "w-full h-full object-contain transition-opacity duration-1000 relative z-10",
                                     isResponding && "brightness-150"
-                                )}
-                                style={{ mixBlendMode: 'screen', backgroundColor: 'transparent' }}
-                            />
-
-                            {/* Internal Glow - Pulses when responding */}
-                            <motion.div
-                                animate={{
-                                    opacity: isResponding ? [0.1, 0.3, 0.1] : 0.05,
-                                    scale: isResponding ? [1, 1.2, 1] : 1
-                                }}
-                                transition={{
-                                    duration: 2,
-                                    repeat: Infinity,
-                                    ease: "easeInOut"
-                                }}
-                                className={cn(
-                                    "absolute inset-4 rounded-full bg-amber-500/5 blur-2xl",
-                                    isResponding && "bg-white/20 blur-3xl"
                                 )}
                             />
                         </div>
-                    </motion.div>
+
+                        {/* Internal Glow - Pulses when responding */}
+                        <motion.div
+                            animate={{
+                                opacity: isResponding ? [0.1, 0.3, 0.1] : 0.05,
+                                scale: isResponding ? [1, 1.2, 1] : 1
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                            }}
+                            className={cn(
+                                "absolute inset-4 rounded-full bg-amber-500/5 blur-2xl",
+                                isResponding && "bg-white/20 blur-3xl"
+                            )}
+                        />
+                    </div>
                 </motion.div>
-            )}
-        </AnimatePresence>
+            </motion.div>
+    )
+}
+    </AnimatePresence >
     );
 };
