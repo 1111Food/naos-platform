@@ -7,9 +7,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface GuardianProps {
     view: 'LANDING' | 'ONBOARDING' | 'TEMPLE' | 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'SYNASTRY' | 'MAYA' | 'TRANSITS' | 'ORIENTAL';
+    onOpenChat?: () => void;
 }
 
-export const Guardian: React.FC<GuardianProps> = ({ view }) => {
+export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
     const timeMode = useTimeBasedMode();
     const { state } = useGuardianState();
     const [scrollY, setScrollY] = React.useState(0);
@@ -52,11 +53,17 @@ export const Guardian: React.FC<GuardianProps> = ({ view }) => {
                     exit={{ opacity: 0, scale: 0.5, y: 20 }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
                     className={cn(
-                        "fixed z-30 pointer-events-none left-1/2",
+                        "fixed z-[100] left-1/2 cursor-pointer pointer-events-auto",
                         isResting && "top-[calc(120px+env(safe-area-inset-top))] md:top-[80px] w-48 h-48 md:w-72 md:h-72",
                         isChatting && "top-[calc(120px+env(safe-area-inset-top))] md:top-[80px] w-32 h-32 md:w-40 md:h-40",
                         isManifesting && "top-[calc(4rem+env(safe-area-inset-top))] left-6 -translate-x-0 w-20 h-20"
                     )}
+                    onClick={(e) => {
+                        console.log("Guardian: Click detected. Invoke onOpenChat.");
+                        e.stopPropagation();
+                        onOpenChat?.();
+                    }}
+                    style={{ isolation: 'isolate' }}
                 >
                     {/* Sacred Breathing & Floating Wrapper */}
                     <motion.div
@@ -99,9 +106,10 @@ export const Guardian: React.FC<GuardianProps> = ({ view }) => {
                                 playsInline
                                 preload="auto"
                                 className={cn(
-                                    "w-full h-full object-contain filter drop-shadow-[0_0_20px_rgba(255,210,125,0.4)] transition-opacity duration-1000",
-                                    isResponding && "drop-shadow-[0_0_40px_rgba(255,255,255,0.6)]"
+                                    "w-full h-full object-contain transition-opacity duration-1000 bg-transparent relative z-10",
+                                    isResponding && "brightness-125"
                                 )}
+                                style={{ mixBlendMode: 'screen' }}
                             />
 
                             {/* Internal Glow - Pulses when responding */}

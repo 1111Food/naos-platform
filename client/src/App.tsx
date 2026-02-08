@@ -111,7 +111,7 @@ function App() {
     <GuardianProvider>
       <div className="min-h-screen text-foreground font-sans selection:bg-primary/30 overflow-x-hidden relative">
         <EtherBackground />
-        <Guardian view={activeView} />
+        <Guardian view={activeView} onOpenChat={() => setActiveView('CHAT')} />
 
         <div className="relative z-10 min-h-screen flex flex-col animate-in fade-in duration-1000">
 
