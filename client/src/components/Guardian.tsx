@@ -59,11 +59,9 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                         isManifesting && "top-[calc(4rem+env(safe-area-inset-top))] left-6 -translate-x-0 w-20 h-20"
                     )}
                     onClick={(e) => {
-                        console.log("Guardian: Click detected. Invoke onOpenChat.");
                         e.stopPropagation();
                         onOpenChat?.();
                     }}
-                    style={{ mixBlendMode: 'plus-lighter', transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
                 >
                     {/* Sacred Breathing & Floating Wrapper */}
                     <motion.div
@@ -109,6 +107,7 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                                     "w-full h-full object-contain transition-opacity duration-1000 relative z-10",
                                     isResponding && "brightness-150"
                                 )}
+                                style={{ mixBlendMode: 'screen', background: 'transparent' }}
                             />
                         </div>
 
@@ -128,11 +127,9 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                                 isResponding && "bg-white/20 blur-3xl"
                             )}
                         />
-                    </div>
+                    </motion.div>
                 </motion.div>
-            </motion.div>
-    )
-}
-    </AnimatePresence >
+            )}
+        </AnimatePresence>
     );
 };
