@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/cli": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
     "@remotion/cli": "^4.0.417",
     "@remotion/player": "^4.0.417",
     "clsx": "^2.1.1",

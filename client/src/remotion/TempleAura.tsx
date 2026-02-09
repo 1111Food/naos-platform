@@ -63,7 +63,7 @@ export const TempleAura = () => {
         config: { damping: 10, stiffness: 100 }
     });
 
-    const glowOpacity = interpolate(beat, [0, 1], [0.3, 0.8]);
+    // const glowOpacity = interpolate(beat, [0, 1], [0.3, 0.8]); // Removed after logo integration.业务
     const scaleLogo = interpolate(beat, [0, 1], [1, 1.05]);
 
     const particles = useMemo(() => {
@@ -97,24 +97,21 @@ export const TempleAura = () => {
             ))}
 
             <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
-                <div style={{ transform: `scale(${scaleLogo})`, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <h1
+                <div style={{ position: 'absolute', left: '50%', transform: `scale(${scaleLogo}) translate(-50%, -95%)`, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <img
+                        src="/logo-naos.png?v=2"
+                        alt="NAOS"
+                        className="naos-logo"
                         style={{
-                            fontSize: '5rem',
-                            fontFamily: 'serif',
-                            fontWeight: 'bold',
-                            letterSpacing: '0.2em',
-                            background: 'linear-gradient(to bottom, #FFF8E7, #D4AF37)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            filter: `drop-shadow(0 0 ${glowOpacity * 20}px rgba(212, 175, 55, 0.5))`
+                            width: '280px',
+                            maxWidth: '80vw',
+                            height: 'auto',
+                            margin: '0 auto',
+                            filter: `drop-shadow(0 0 15px rgba(255, 215, 0, 0.4))`,
+                            opacity: 0.9,
+                            display: 'block'
                         }}
-                    >
-                        NAOS
-                    </h1>
-                    <p style={{ marginTop: '1rem', color: '#D4AF3799', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.5em', fontWeight: '500' }}>
-                        Templo de Luz
-                    </p>
+                    />
                 </div>
             </AbsoluteFill>
         </AbsoluteFill>

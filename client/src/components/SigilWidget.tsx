@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Send } from 'lucide-react';
+import { useTimeBasedMode } from '../hooks/useTimeBasedMode';
 
 interface SigilWidgetProps {
     onNavigate: (view: any) => void;
@@ -7,6 +8,7 @@ interface SigilWidgetProps {
 }
 
 export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMessage }) => {
+    const timeMode = useTimeBasedMode();
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<{ role: 'user' | 'sigil', text: string }[]>([
@@ -17,7 +19,6 @@ export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMe
     React.useEffect(() => {
         if (externalMessage) {
             setMessages(prev => [...prev, { role: 'sigil', text: externalMessage }]);
-            // REMOVED: setIsOpen(true); // Luis requested manual opening only
         }
     }, [externalMessage]);
 
@@ -58,7 +59,7 @@ export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMe
         <div className="fixed top-20 md:top-28 left-6 md:left-auto md:right-6 z-[60] flex flex-col items-start md:items-end pointer-events-none">
 
             {/* Chat Window */}
-            <div className={`pointer-events-auto bg-black/95 backdrop-blur-2xl border border-red-500/20 rounded-3xl w-[85vw] md:w-80 mb-4 overflow-hidden transition-all duration-300 origin-top-left md:origin-bottom-right shadow-[0_0_30px_rgba(255,0,0,0.2)] ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 h-0'}`}>
+            <div className={`pointer-events-auto bg-black/95 backdrop-blur-2xl border border-red-500/20 rounded-3xl w-[85vw] md:w-80 mb-4 overflow-hidden transition-all duration-300 origin-top-left md:origin-bottom-right shadow-[0_0_30px_rgba(255,0,0,0.2)] ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 h-0 overflow-hidden'}`}>
                 <div className="p-4 h-64 overflow-y-auto flex flex-col gap-3">
                     {messages.map((m, i) => (
                         <div key={i} className={`text-xs p-3 rounded-xl max-w-[80%] ${m.role === 'sigil' ? 'bg-white/10 self-start text-white' : 'bg-primary/20 self-end text-primary-foreground'}`}>
@@ -81,23 +82,35 @@ export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMe
                 </div>
             </div>
 
-            {/* Avatar Toggle */}
+            {/* Avatar Toggle - METAMORFOSIS GUARDIÁN */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="pointer-events-auto w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-tr from-red-600 to-amber-600 p-[1px] shadow-[0_0_15px_rgba(255,0,0,0.4)] hover:scale-110 transition-transform group"
+                className="pointer-events-auto w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-tr from-purple-600 to-blue-600 p-[1px] shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:scale-110 active:scale-95 transition-all duration-300 group relative"
             >
-                <div className="w-full h-full rounded-full bg-black flex items-center justify-center relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-red-500/20 to-amber-500/20 animate-pulse" />
-                    {isOpen ? <X className="w-5 h-5 md:w-6 md:h-6 text-white" /> : <SigilIconSmall className="w-5 h-5 md:w-6 md:h-6 text-white" />}
+                <div className="w-full h-full rounded-full bg-black flex items-center justify-center relative overflow-hidden backdrop-blur-xl">
+                    {isOpen ? (
+                        <X className="w-5 h-5 md:w-6 md:h-6 text-white animate-in spin-in-90 duration-300" />
+                    ) : (
+                        <video
+                            src={timeMode === 'DAY' ? '/Guardian-Day.mp4' : '/Guardian-Night.mp4'}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover rounded-full transition-all duration-500 group-hover:scale-[0.95]"
+                            style={{
+                                objectPosition: 'center center',
+                                transform: 'scale(1.2)',
+                                backgroundColor: 'black'
+                            }}
+                        />
+                    )}
+                    {/* Pulsing indicator when closed */}
+                    {!isOpen && (
+                        <div className="absolute inset-0 rounded-full border border-white/20 animate-ping opacity-30" />
+                    )}
                 </div>
             </button>
         </div>
     );
 };
-
-const SigilIconSmall = ({ className }: { className: string }) => (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-        <path d="M12 2L14.5 9H21L15.5 13.5L18 20.5L12 16L6 20.5L8.5 13.5L3 9H9.5L12 2Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1" />
-    </svg>
-);

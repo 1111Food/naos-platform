@@ -93,8 +93,8 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                             )}
                         />
 
-                        {/* Main Guardian Identity - PRIORITIZED VIDEO */}
-                        <div className="relative w-full h-full overflow-hidden">
+                        {/* Main Guardian Identity - FORCED MASKING SOLUTION */}
+                        <div className="relative w-full h-full overflow-hidden" style={{ backgroundColor: 'transparent !important', boxShadow: 'none !important', border: 'none !important' }}>
                             <video
                                 key={`${timeMode}-${assetVersion}`}
                                 src={timeMode === 'DAY' ? `/Guardian-Day.mp4?v=${assetVersion}` : `/Guardian-Night.mp4?v=${assetVersion}`}
@@ -107,7 +107,13 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                                     "w-full h-full object-contain transition-opacity duration-1000 relative z-10",
                                     isResponding && "brightness-150"
                                 )}
-                                style={{ mixBlendMode: 'screen', background: 'transparent' }}
+                                style={{
+                                    mixBlendMode: 'screen',
+                                    background: 'transparent',
+                                    maskImage: 'radial-gradient(closest-side, black 40%, transparent 90%)',
+                                    WebkitMaskImage: 'radial-gradient(closest-side, black 40%, transparent 90%)',
+                                    filter: 'contrast(1.1) brightness(0.9)'
+                                }}
                             />
                         </div>
 

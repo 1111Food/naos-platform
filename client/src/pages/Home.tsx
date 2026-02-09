@@ -88,23 +88,26 @@ export const Home: React.FC<HomeProps> = ({ onSelectFeature }) => {
 
 
             {/* 1) CONTENEDOR RITUAL CENTRAL (ALTAR) */}
-            <main className="relative z-10 w-full max-w-5xl mx-auto min-h-screen py-24 flex flex-col items-center justify-center gap-16">
+            <main className="relative z-10 w-full max-w-7xl mx-auto min-h-screen py-24 flex flex-col items-center justify-center">
 
                 {/* The Guardian is now global and persistent */}
-                <div className="h-40" /> {/* Spacer to maintain layout balance */}
+                <div className="h-48 md:h-64" /> {/* Space between Guardian and Watermark/Chip */}
 
-                {/* 4) TEXTO RITUAL (INVOCACIÓN) */}
-                <div className="text-center space-y-4 max-w-lg mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-                    <h1 className="text-3xl md:text-4xl font-serif tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200 drop-shadow-sm opacity-90 animate-pulse-slow">
-                        Bienvenido al corazón del Templo.
-                    </h1>
-                    <p className="text-white/40 font-serif italic text-lg tracking-wider">
-                        ¿Qué energía deseas explorar hoy?
-                    </p>
+                {/* 4) TEXTO RITUAL (INVOCACIÓN) - MAGNETIC SNAP TO CARDS */}
+                <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300 mb-6 md:mb-8">
+                    <div className={cn(
+                        "px-8 py-3 rounded-full backdrop-blur-xl border transition-all duration-700",
+                        "bg-[#1A103D]/60 border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)]",
+                        "group hover:bg-[#1A103D]/80 hover:border-purple-400/50"
+                    )}>
+                        <p className="text-white/90 font-serif italic text-sm md:text-base tracking-[0.15em] uppercase text-center">
+                            ¿Qué energía deseas explorar hoy?
+                        </p>
+                    </div>
                 </div>
 
                 {/* 5) MÓDULOS COMO ARTEFACTOS (GRID DE 5 PILARES) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full px-6 md:px-0 pb-10 max-w-7xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full px-6 pb-10 max-w-7xl mx-auto justify-items-center">
                     {modules.map((item, idx) => (
                         <button
                             key={item.id}

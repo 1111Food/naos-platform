@@ -131,7 +131,11 @@ function App() {
                 ) : (
                   <div className="w-2 h-2 rounded-full bg-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
                 )}
-                <h1 className="text-xl font-serif font-light tracking-[0.2em] text-white/80 select-none">NAOS</h1>
+                <img
+                  src="/logo-naos.png?v=2"
+                  alt="NAOS"
+                  className="h-8 w-auto opacity-90 select-none pointer-events-none"
+                />
               </div>
 
               <div className="hidden lg:flex items-center gap-8 ml-12">

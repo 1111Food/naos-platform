@@ -1,11 +1,13 @@
-import React from 'react';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { useTimeBasedMode } from '../hooks/useTimeBasedMode';
 
 interface LandingScreenProps {
     onEnter: () => void;
 }
 
 export const LandingScreen: React.FC<LandingScreenProps> = ({ onEnter }) => {
+    const timeMode = useTimeBasedMode();
+
     return (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black overflow-hidden">
             {/* Background Atmosphere */}
@@ -16,15 +18,31 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onEnter }) => {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] animate-pulse" />
 
             <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-2xl animate-in fade-in zoom-in duration-1000">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 mb-8 backdrop-blur-xl">
-                    <Sparkles className="w-10 h-10 text-primary animate-pulse" />
+                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 mb-6 backdrop-blur-xl relative overflow-hidden">
+                    <video
+                        src={timeMode === 'DAY' ? '/Guardian-Day.mp4' : '/Guardian-Night.mp4'}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover rounded-full transition-transform duration-500 scale-[1.3]"
+                        style={{
+                            mixBlendMode: 'screen',
+                            background: 'transparent',
+                            maskImage: 'radial-gradient(closest-side, black 40%, transparent 90%)',
+                            WebkitMaskImage: 'radial-gradient(closest-side, black 40%, transparent 90%)',
+                            filter: 'contrast(1.1) brightness(0.9)'
+                        }}
+                    />
                 </div>
 
-                <h1 className="text-6xl md:text-8xl font-serif font-light tracking-tighter text-white mb-4 drop-shadow-2xl">
-                    NAOS
-                </h1>
+                <img
+                    src="/logo-naos.png?v=2"
+                    alt="NAOS"
+                    className="w-[350px] md:w-[400px] max-w-[90%] h-auto mb-8 drop-shadow-[0_0_30px_rgba(255,215,0,0.3)] animate-in fade-in zoom-in duration-1000"
+                />
 
-                <p className="text-lg md:text-xl text-primary/80 font-light tracking-[0.2em] uppercase mb-12">
+                <p className="text-lg md:text-xl text-primary/80 font-light tracking-[0.2em] uppercase mb-10">
                     Conecta con tu Alma
                 </p>
 
