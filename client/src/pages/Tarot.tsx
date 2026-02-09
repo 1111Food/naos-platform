@@ -298,9 +298,9 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                                         {oracleState === 'SILENT' && (
                                             <button
                                                 onClick={() => handleFetchReading(selectedCards)}
-                                                className="px-8 py-2 rounded-full border border-white/5 text-[11px] uppercase tracking-[0.2em] text-white/40 hover:text-white/80 transition-all flex items-center gap-2"
+                                                className="px-8 py-3 rounded-full border border-red-500/20 text-red-500/60 uppercase tracking-[0.3em] text-[11px] hover:bg-red-500/5 transition-all duration-700"
                                             >
-                                                <RefreshCw className="w-3 h-3" /> Reintentar lectura
+                                                Sintonizar de nuevo
                                             </button>
                                         )}
                                         <button
@@ -379,7 +379,7 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                     className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(239,68,68,0.05)_100%)]"
                 />
             </div>
-        </div>
+        </div >
     );
 };
 

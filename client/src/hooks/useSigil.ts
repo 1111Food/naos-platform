@@ -8,11 +8,12 @@ interface Message {
 
 export function useSigil(userName?: string) {
     const getWelcomeMessage = useCallback(() => {
-        const name = userName || 'Viajero';
+        // Clean name to avoid "L.." if the name already has a dot
+        const cleanName = (userName || 'Viajero').replace(/\.+$/, '');
         const intros = [
-            `El silencio ha terminado. NAOS te reconoce, ${name}.`,
+            `El silencio ha terminado. NAOS te reconoce, ${cleanName}.`,
             `Las esferas se han alineado. ¿Qué buscas en el tejido del tiempo?`,
-            `Bienvenido al Templo, ${name}. Tu rastro estelar nos guía.`
+            `Bienvenido al Templo, ${cleanName}. Tu rastro estelar nos guía.`
         ];
         return intros[Math.floor(Math.random() * intros.length)];
     }, [userName]);

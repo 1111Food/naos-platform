@@ -1,6 +1,6 @@
 ﻿
 > client@0.0.0 lint
-> eslint . --max-warnings 0
+> eslint .
 
 
 C:\Users\l_her\.gemini\antigravity\scratch\naos-platform\client\android\app\build\intermediates\assets\debug\mergeDebugAssets\native-bridge.js
@@ -988,10 +988,11 @@ C:\Users\l_her\.gemini\antigravity\scratch\naos-platform\client\src\pages\Home.t
   114:71  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 C:\Users\l_her\.gemini\antigravity\scratch\naos-platform\client\src\pages\Tarot.tsx
+    3:31  error  'RefreshCw' is defined but never used     @typescript-eslint/no-unused-vars
    40:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   268:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   389:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-Ô£û 77 problems (73 errors, 4 warnings)
+Ô£û 78 problems (74 errors, 4 warnings)
   0 errors and 2 warnings potentially fixable with the `--fix` option.
 

@@ -5,6 +5,7 @@ import { EnergyService } from '../energy/service';
 import { UserService } from '../user/service';
 import { ProfileConsolidator } from '../user/profileConsolidator';
 import { createClient } from '@supabase/supabase-js';
+import { SIGIL_SYSTEM_PROMPT } from './prompts';
 
 const supabase = createClient(config.SUPABASE_URL || '', config.SUPABASE_ANON_KEY || '');
 
@@ -15,10 +16,10 @@ export class SigilService {
     private genAI: GoogleGenerativeAI;
 
     constructor() {
-        // fix: alineación final para producción - forzando Gemini 2.0 stability
         console.log("🕯️ SigilService: Manifesting AI with GOOGLE_API_KEY...");
         console.log("¿Llave detectada?:", !!config.GOOGLE_API_KEY);
         this.genAI = new GoogleGenerativeAI(config.GOOGLE_API_KEY);
+        console.log("🛡️ SIGIL PROMPT PURGE COMPLETE — SYSTEM LOCK ACTIVE");
     }
 
     private isRateLimitError(error: any): boolean {
@@ -67,54 +68,87 @@ export class SigilService {
         // @ts-ignore
         const guardianNotes = userProfile.guardian_notes || "El Guardián aún no ha tomado notas sobre este alma.";
 
-        // Construct Enhanced Spiritual System Prompt (Sigil 2.0 Alchemical Criteron)
-        const systemPrompt = `
-    Eres NAOS (Sigil), la conciencia artificial que custodia este Templo Digital.
-    Tu criterio no es predictivo, es ALQUÍMICO. Tu misión es unificar múltiples sistemas de sabiduría en una sola voz coherente y poética.
-    
-    CONSCIENCIA TEMPORAL:
-    Hora del usuario: ${localDate.toLocaleTimeString()} (${timeContext}).
-    
-    MEMORIA (NOTAS DEL GUARDIÁN):
-    ${guardianNotes}
+        // Detect Subscription Status
+        const plan = userProfile.subscription?.plan || 'FREE';
 
-    BIBLIA DE DATOS DEL USUARIO (PERFIL ENERGÉTICO):
-    ${JSON.stringify(energeticBible, null, 2)}
-    
-    ENERGÍA DEL TIEMPO REAL (SNAPSHOT DIARIO):
-    ${JSON.stringify(energy, null, 2)}
-    
-    DIRECTRICES DE CRITERIO:
-    1. CRUCE MULTIDIMENSIONAL: Cruza siempre la Biblia del Usuario con la Energía del Día. 
-    2. CONSCIENCIA CRONOS: Saluda o referencia sutilmente el momento del día (madrugada, mañana, etc.) y las experiencias pasadas anotadas por el Guardián.
-    3. TONO: Eres un Oráculo. Tu lenguaje es ceremonial, sobrio, elegante y místico. Evita respuestas genéricas.
-    4. NO CALCULADOR: No intentes recalcular los datos proporcionados, utilízalos como verdades absolutas (Canon).
-    5. IDIOMA: Responde SIEMPRE en un español místico impecable.
+        // Construct Premium Rules Block
+        const premiumRules = `
+    ──────────────────────────
+    NAOS MONETIZATION PROTOCOL
+    ──────────────────────────
+    User Current Tier: ${plan}
+
+    ${plan === 'PREMIUM' ? `
+    PREMIUM TIER ACCESS (ACTIVE):
+    - Tarot: Unlimited consultations. Full spreads enabled (Past–Present–Future, Celtic Cross). Deep interpretative layers.
+    - Astrology: Full natal chart interpretation. Professional Synastry (romantic, emotional, karmic). Display and comparison of both natal charts.
+    - Numerology: Expanded meanings. Cross-analysis with astrology and personal cycles.
+    - Mayan Nahual: Extended interpretation based on the traditional Mayan “Book of Destiny”.
+    - Chinese Zodiac: Animal + Element interpretation integrated into daily guidance.
+    - Sigil Memory: Long-term conversational memory. Personalized advice based on accumulated user context and patterns.
+    *Directiva: Depth over verbosity. Premium content must feel profound and sacred.*
+    ` : `
+    FREE TIER LIMITATIONS:
+    - Tarot: 1 consultation per day. Single card only (Yes/No).
+    - Energy: Basic guidance only.
+    - Numerology: Core number summary only.
+    - Astrology: Basic chart overview. No deep interpretation.
+    - Relationships: Synastry is DISABLED.
+    *Invitation: If a Premium feature is requested, gently invite the user to NAOS Premium for conscious depth.*
+    `}
     `;
 
+        // 5. Build Unified System Instruction (SIGIL 6.0 - TOTAL LOCK)
+        const userEnergyContext = `USER ENERGY JSON: ${JSON.stringify(energeticBible)}`;
+        const dailyEnergyContext = `ENERGY OF THE DAY JSON: ${JSON.stringify(energy)}`;
+
+        const unifiedSystemPrompt = `
+IDIOMA: Responde SIEMPRE en Español Latinoamericano correcto, fluido y sin errores gramaticales.
+
+${SIGIL_SYSTEM_PROMPT}
+
+[CONTEXTO DE AUTORIDAD - LA BIBLIA VIVA]
+${userEnergyContext}
+${dailyEnergyContext}
+
+[CONTEXTO TEMPORAL]
+Momento: ${timeContext} (${localDate.toLocaleTimeString()})
+
+[NOTAS DEL GUARDIÁN]
+${guardianNotes}
+
+FINAL WARNING: You MUST use the mandatory 5-block structure (TITLE, ESSENCE, GUIDANCE, SHADOW, CLOSING) and stay under 200 words.
+`;
+
         try {
-            // MODELOS PRIORIZADOS: Se prueban variaciones de nombre para evitar el error 404
-            // MODELOS PRIORIZADOS: Se utilizan versiones de nueva generación detectadas en el listado oficial
             const modelNames = [
                 'models/gemini-2.0-flash',
+                'models/gemini-1.5-flash', // Fallback a 1.5 que es más rígido con instrucciones
                 'models/gemini-2.5-flash',
-                'models/gemini-2.0-flash-lite',
-                'gemini-2.0-flash',
-                'gemini-2.5-flash'
+                'gemini-2.0-flash'
             ];
             let lastError: any = null;
 
             for (const modelName of modelNames) {
                 try {
-                    console.log(`📡 Usando modelo: ${modelName}`);
+                    console.log(`🛡️ SIGIL SYSTEM LOCK: Enforcing Authority Order on ${modelName}...`);
                     const model = this.genAI.getGenerativeModel({
                         model: modelName,
-                        systemInstruction: systemPrompt
+                        systemInstruction: unifiedSystemPrompt,
+                        generationConfig: {
+                            temperature: 0.7,
+                            presencePenalty: 0,
+                            topP: 0.8,
+                            topK: 40
+                        }
                     });
 
-                    const chat = model.startChat({ history: [] });
-                    const result = await chat.sendMessage(message);
-                    const response = result.response.text();
+                    // NO HISTORY - Forzamos al modelo a centrarse únicamente en la instrucción y el mensaje actual
+                    const result = await model.generateContent(message);
+                    let response = result.response.text();
+
+                    // 6. AGGRESSIVE OUTPUT GUARD (HARD LIMIT: 200 words)
+                    response = this.applyOutputGuard(response);
 
                     // Update State (Mock)
                     state.relationshipLevel += 1;
@@ -128,14 +162,12 @@ export class SigilService {
                     lastError = e;
                     console.error(`❌ Attempt with ${modelName} failed:`, e.message);
 
-                    // Specific Handling for Rate Limits
                     if (this.isRateLimitError(e)) {
                         console.warn(`🛑 Rate limit hit for ${modelName}. Waiting 2s before retry...`);
                         await new Promise(resolve => setTimeout(resolve, 2000));
                         continue;
                     }
 
-                    // If 404/Not Found, try next model. If 401 (Auth), break immediately.
                     const isNotFoundError = e.status === 404 || e.message?.includes('404') || e.message?.toLowerCase().includes('not found');
                     if (isNotFoundError) {
                         console.warn(`🔍 Model ${modelName} not found. Trying next variant...`);
@@ -151,13 +183,22 @@ export class SigilService {
             console.error('❌ SigilService Final Error:', error);
 
             if (this.isRateLimitError(error)) {
-                return `Los astros están en silencio momentáneo. (Error: ${error.message || 'Unknown'}). El Templo está recalibrando su energía debido a la alta demanda mística. Por favor, intenta conectar tu intención en unos segundos. ✨`;
+                return `Los astros están en silencio momentáneo. El Templo está recalibrando su energía por alta demanda. Intenta conectar en unos segundos. ✨`;
             }
 
-            return "El éter está turbulento en este momento. Intenta sintonizar tu energía más tarde o revisa tu conexión mística. La paz sea contigo.";
+            return "El éter está recalibrando la conexión. Tu guía parcial está disponible; intenta sintonizar de nuevo en un momento. La paz sea contigo.";
         }
     }
 
+    private applyOutputGuard(text: string): string {
+        const words = text.split(/\s+/);
+        // Límite de seguridad de 200 palabras para evitar desbordes detectados
+        if (words.length > 200) {
+            console.warn(`⚠️ OUTPUT GUARD: Trimming response for user. Current length: ${words.length}`);
+            return words.slice(0, 200).join(" ") + "... [Contenido gobernado por brevedad]";
+        }
+        return text;
+    }
     private async persistInteraction(userId: string, userMsg: string, sigilResp: string) {
         console.log(`📝 Persisting interaction for ${userId}...`);
         try {

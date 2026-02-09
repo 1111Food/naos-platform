@@ -27,30 +27,22 @@ export async function tarotRoutes(app: FastifyInstance) {
         console.log(`🔮 Tarot POST received. Intent: "${question}", Cards: ${cards.length}`);
 
         try {
-            // Construct a ritualistic prompt for the Sigil
-            const prompt = `
-                Actúa como un Místico Lector de Tarot en el 'Templo de Luz'.
-                
-                Contexto:
-                - Pregunta del Usuario (Intención del Alma): "${question}"
-                - Tipo de Tirada: ${spreadType}
-                - Modo: ${mode || 'INTERPRETATIVE'}
-                
-                Las cartas reveladas son:
-                ${cards.map((c, i) => `${i + 1}. ${c.name}`).join('\n')}
+            // Construct a ritualistic intent message for the Sigil Central
+            const message = `
+            SOLICITUD DE INTERPRETACIÓN DE TAROT:
+            Pregunta: "${question}"
+            Tirada: ${spreadType}
+            Modo: ${mode || 'INTERPRETATIVE'}
+            
+            Cartas reveladas:
+            ${cards.map((c, i) => `${i + 1}. ${c.name}`).join('\n')}
 
-                Misión:
-                Provee una interpretación espiritual profunda de estas cartas en relación con la intención del usuario.
-                Enfócate en la guía, la luz y el empoderamiento.
-                Mantén un tono ceremonial pero accesible.
-                Dirígete al usuario directamente.
-                Máximo 150 palabras.
-                RESPONDE SIEMPRE EN ESPAÑOL.
+            Por favor, interpreta estas cartas siguiendo estrictamente el formato de GOBERNANZA DE SIGIL.
             `;
 
-            // Generate response using Gemini (Sigil)
-            console.log("Attempting to contact Gemini (Sigil)...");
-            const response = await sigilService.generateResponse(prompt, 'user-1');
+            // Generate response using Sigil Central (processMessage)
+            console.log("Attempting to contact Gemini (Sigil Central)...");
+            const response = await sigilService.processMessage('user-1', message);
             console.log("Gemini response received.");
 
             return {

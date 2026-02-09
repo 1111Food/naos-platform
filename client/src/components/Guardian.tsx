@@ -43,21 +43,22 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
             {!isHidden && (
                 <motion.div
                     initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                    className={cn(
+                        "fixed z-[100] left-1/2 cursor-pointer pointer-events-auto",
+                        isResting && "top-[calc(120px+env(safe-area-inset-top))] md:top-[80px]",
+                        isChatting && "top-[calc(120px+env(safe-area-inset-top))] md:top-[80px]",
+                        isManifesting && "top-[calc(4rem+env(safe-area-inset-top))] left-6 -translate-x-0 !w-20 !h-20"
+                    )}
                     animate={{
                         opacity: isManifesting ? 0.4 : scrollOpacity,
                         scale: isManifesting ? 0.6 : (isResting ? scrollScale * 1.2 : scrollScale),
-                        x: "-50%",
+                        x: isManifesting ? 0 : "-50%",
                         y: 0,
                         rotate: isManifesting ? 12 : 0,
+                        width: isManifesting ? 80 : (isResting ? (window.innerWidth < 768 ? 192 : 288) : (window.innerWidth < 768 ? 128 : 160)),
+                        height: isManifesting ? 80 : (isResting ? (window.innerWidth < 768 ? 192 : 288) : (window.innerWidth < 768 ? 128 : 160))
                     }}
-                    exit={{ opacity: 0, scale: 0.5, y: 20 }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
-                    className={cn(
-                        "fixed z-[100] left-1/2 cursor-pointer pointer-events-auto",
-                        isResting && "top-[calc(120px+env(safe-area-inset-top))] md:top-[80px] w-48 h-48 md:w-72 md:h-72",
-                        isChatting && "top-[calc(120px+env(safe-area-inset-top))] md:top-[80px] w-32 h-32 md:w-40 md:h-40",
-                        isManifesting && "top-[calc(4rem+env(safe-area-inset-top))] left-6 -translate-x-0 w-20 h-20"
-                    )}
+                    style={{}}
                     onClick={(e) => {
                         e.stopPropagation();
                         onOpenChat?.();
@@ -76,6 +77,7 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                                 : { duration: 6, repeat: Infinity, ease: "easeInOut" }
                         }}
                         className="relative w-full h-full"
+                        style={isResting ? { transform: 'translateY(5vh)' } : {}}
                     >
                         {/* Halo / Aura - Intensity depends on state */}
                         <motion.div
@@ -104,10 +106,11 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                                 playsInline
                                 preload="auto"
                                 className={cn(
-                                    "w-full h-full object-contain transition-opacity duration-1000 relative z-10",
+                                    "w-full h-full object-cover transition-opacity duration-1000 relative z-10",
                                     isResponding && "brightness-150"
                                 )}
                                 style={{
+                                    objectPosition: '52% 48%',
                                     mixBlendMode: 'screen',
                                     background: 'transparent',
                                     maskImage: 'radial-gradient(closest-side, black 40%, transparent 90%)',

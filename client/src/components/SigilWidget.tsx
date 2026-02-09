@@ -56,10 +56,10 @@ export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMe
     };
 
     return (
-        <div className="fixed top-20 md:top-28 left-6 md:left-auto md:right-6 z-[60] flex flex-col items-start md:items-end pointer-events-none">
+        <div className="fixed top-[120px] right-[20px] z-[60] flex flex-col items-end pointer-events-none">
 
             {/* Chat Window */}
-            <div className={`pointer-events-auto bg-black/95 backdrop-blur-2xl border border-red-500/20 rounded-3xl w-[85vw] md:w-80 mb-4 overflow-hidden transition-all duration-300 origin-top-left md:origin-bottom-right shadow-[0_0_30px_rgba(255,0,0,0.2)] ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 h-0 overflow-hidden'}`}>
+            <div className={`pointer-events-auto bg-black/95 backdrop-blur-2xl border border-red-500/20 rounded-3xl w-[85vw] md:w-80 mb-4 overflow-hidden transition-all duration-300 origin-top-right shadow-[0_0_30px_rgba(255,0,0,0.2)] ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-90 h-0 overflow-hidden'}`}>
                 <div className="p-4 h-64 overflow-y-auto flex flex-col gap-3">
                     {messages.map((m, i) => (
                         <div key={i} className={`text-xs p-3 rounded-xl max-w-[80%] ${m.role === 'sigil' ? 'bg-white/10 self-start text-white' : 'bg-primary/20 self-end text-primary-foreground'}`}>
@@ -99,7 +99,7 @@ export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMe
                             playsInline
                             className="w-full h-full object-cover rounded-full transition-all duration-500 group-hover:scale-[0.95]"
                             style={{
-                                objectPosition: 'center center',
+                                objectPosition: '65% 30%',
                                 transform: 'scale(1.2)',
                                 backgroundColor: 'black'
                             }}

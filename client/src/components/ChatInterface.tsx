@@ -129,19 +129,27 @@ export function ChatInterface() {
 
 const TypewriterText = ({ text }: { text: string }) => {
     const [displayedText, setDisplayedText] = useState('');
+    const textRef = useRef(text);
+    const indexRef = useRef(0);
 
     useEffect(() => {
-        let i = 0;
-        const timer = setInterval(() => {
-            if (i < text.length) {
-                setDisplayedText(prev => prev + text.charAt(i));
-                i++;
+        // Reset state on new text
+        textRef.current = text;
+        indexRef.current = 0;
+        setDisplayedText('');
+
+        const interval = setInterval(() => {
+            if (indexRef.current < textRef.current.length) {
+                const nextChar = textRef.current.charAt(indexRef.current);
+                setDisplayedText((prev) => prev + nextChar);
+                indexRef.current++;
             } else {
-                clearInterval(timer);
+                clearInterval(interval);
             }
         }, 20);
-        return () => clearInterval(timer);
+
+        return () => clearInterval(interval);
     }, [text]);
 
-    return <p>{displayedText}</p>;
+    return <p className="whitespace-pre-wrap">{displayedText}</p>;
 };
