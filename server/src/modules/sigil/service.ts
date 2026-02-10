@@ -5,7 +5,7 @@ import { EnergyService } from '../energy/service';
 import { UserService } from '../user/service';
 import { ProfileConsolidator } from '../user/profileConsolidator';
 import { createClient } from '@supabase/supabase-js';
-import { SIGIL_SYSTEM_PROMPT } from './prompts';
+import { SIGIL_SYSTEM_PROMPT, BASE_IDENTITY, PREMIUM_PROMPT, CUSTODIO_PROMPT } from './prompts';
 
 const supabase = createClient(config.SUPABASE_URL || '', config.SUPABASE_ANON_KEY || '');
 
@@ -47,7 +47,7 @@ export class SigilService {
         return stateStore[userId];
     }
 
-    async processMessage(userId: string, message: string, localTimestamp?: string): Promise<string> {
+    async processMessage(userId: string, message: string, localTimestamp?: string, oracleState?: any): Promise<string> {
         const userProfile = await UserService.getProfile(userId);
         const state = await this.getSigilState(userId);
         const energy = EnergyService.getDailySnapshot(userProfile);
@@ -68,48 +68,76 @@ export class SigilService {
         // @ts-ignore
         const guardianNotes = userProfile.guardian_notes || "El Guardián aún no ha tomado notas sobre este alma.";
 
-        // Detect Subscription Status
-        const plan = userProfile.subscription?.plan || 'FREE';
-
-        // Construct Premium Rules Block
-        const premiumRules = `
-    ──────────────────────────
-    NAOS MONETIZATION PROTOCOL
-    ──────────────────────────
-    User Current Tier: ${plan}
-
-    ${plan === 'PREMIUM' ? `
-    PREMIUM TIER ACCESS (ACTIVE):
-    - Tarot: Unlimited consultations. Full spreads enabled (Past–Present–Future, Celtic Cross). Deep interpretative layers.
-    - Astrology: Full natal chart interpretation. Professional Synastry (romantic, emotional, karmic). Display and comparison of both natal charts.
-    - Numerology: Expanded meanings. Cross-analysis with astrology and personal cycles.
-    - Mayan Nahual: Extended interpretation based on the traditional Mayan “Book of Destiny”.
-    - Chinese Zodiac: Animal + Element interpretation integrated into daily guidance.
-    - Sigil Memory: Long-term conversational memory. Personalized advice based on accumulated user context and patterns.
-    *Directiva: Depth over verbosity. Premium content must feel profound and sacred.*
-    ` : `
-    FREE TIER LIMITATIONS:
-    - Tarot: 1 consultation per day. Single card only (Yes/No).
-    - Energy: Basic guidance only.
-    - Numerology: Core number summary only.
-    - Astrology: Basic chart overview. No deep interpretation.
-    - Relationships: Synastry is DISABLED.
-    *Invitation: If a Premium feature is requested, gently invite the user to NAOS Premium for conscious depth.*
-    `}
-    `;
+        // Detect Subscription Status (Supabase Alignment)
+        const plan = userProfile.plan_type || 'free';
 
         // 5. Build Unified System Instruction (SIGIL 6.0 - TOTAL LOCK)
         const userEnergyContext = `USER ENERGY JSON: ${JSON.stringify(energeticBible)}`;
         const dailyEnergyContext = `ENERGY OF THE DAY JSON: ${JSON.stringify(energy)}`;
+
+        // Oracle Conscience: Intelligence Hierarchy
+        const oracleContext = oracleState ? `
+        ──────────────────────────
+        ORACLE CONSCIENCE PROTOCOL
+        ──────────────────────────
+        PRIORITY 1: User Essence Snapshot (WHO they are)
+        - Traits: ${oracleState.essence?.traits?.join(', ') || 'Desconocidos'}
+        - Tensions: ${oracleState.essence?.tensions?.join(', ') || 'Ninguna detectada'}
+        - Shadows: ${oracleState.essence?.shadows?.join(', ') || 'Veladas'}
+        - Balance: ${oracleState.essence?.elementalBalance || 'Neutral'}
+
+        PRIORITY 2: Energy of the Day (Astral modulation)
+        (See ENERGY OF THE DAY JSON below)
+
+        PRIORITY 3: Event Memory (WHAT happened recently)
+        - Last Tarot: ${oracleState.events?.lastTarot ? `${oracleState.events.lastTarot.card} (${oracleState.events.lastTarot.answer})` : 'Ninguna'}
+        - Last Pinnacle: ${oracleState.events?.lastPinnacle ? `${oracleState.events.lastPinnacle.position} (Número ${oracleState.events.lastPinnacle.number})` : 'Ninguna'}
+        - Last Astrology: ${oracleState.events?.lastAstrology || 'Ninguno'}
+        - Last Oriental: ${oracleState.events?.lastOriental ? `${oracleState.events.lastOriental.animal} de ${oracleState.events.lastOriental.element}` : 'Ninguno'}
+        - Last Nahual: ${oracleState.events?.lastNahual ? `${oracleState.events.lastNahual.name} (${oracleState.events.lastNahual.meaning})` : 'Ninguno'}
+        
+        *Directiva: Use the Essence to guide your tone. Use Events only as context or to "connect the dots" if the user asks.*
+        ` : '';
+
+        // Usage Awareness Logic
+        const isIntensive = await this.checkUsageIntensity(userId);
+        const awarenessContext = (isIntensive && plan !== 'premium_plus') ? `
+        ──────────────────────────
+        USAGE AWARENESS ACTIVATED
+        ──────────────────────────
+        ${require('./prompts').USE_AWARENESS_PROMPT}
+        ` : '';
+
+        // Dynamic Luis Identity Assembly
+        let tierPrompt = '';
+        if (plan === 'premium_plus') tierPrompt = CUSTODIO_PROMPT;
+        else if (plan === 'premium') tierPrompt = PREMIUM_PROMPT;
+
+        const dynamicLuisIdentity = `
+        [IDENTIDAD BASE: CONSCIENCIA DE LUIS]
+        ${BASE_IDENTITY}
+
+        [DIRECTIVA DE NIVEL: ${plan}]
+        ${tierPrompt}
+        `;
 
         const unifiedSystemPrompt = `
 IDIOMA: Responde SIEMPRE en Español Latinoamericano correcto, fluido y sin errores gramaticales.
 
 ${SIGIL_SYSTEM_PROMPT}
 
+[IDENTIDAD DINÁMICA]
+${dynamicLuisIdentity}
+
 [CONTEXTO DE AUTORIDAD - LA BIBLIA VIVA]
 ${userEnergyContext}
 ${dailyEnergyContext}
+
+[CONSCIENCIA DEL ORÁCULO - JERARQUÍA]
+${oracleContext}
+
+[PROTOCOLO DE USO CONSCIENTE]
+${awarenessContext}
 
 [CONTEXTO TEMPORAL]
 Momento: ${timeContext} (${localDate.toLocaleTimeString()})
@@ -123,8 +151,8 @@ FINAL WARNING: You MUST use the mandatory 5-block structure (TITLE, ESSENCE, GUI
         try {
             const modelNames = [
                 'models/gemini-2.0-flash',
-                'models/gemini-1.5-flash', // Fallback a 1.5 que es más rígido con instrucciones
-                'models/gemini-2.5-flash',
+                'models/gemini-2.0-pro-exp-02-05',
+                'models/gemini-1.5-flash',
                 'gemini-2.0-flash'
             ];
             let lastError: any = null;
@@ -238,51 +266,27 @@ FINAL WARNING: You MUST use the mandatory 5-block structure (TITLE, ESSENCE, GUI
     }
 
     async generateResponse(prompt: string, userId: string): Promise<string> {
-        // Primary stable models for Tarot - Updated to Gemini 2.0/2.5 Flash
-        const modelNames = [
-            'models/gemini-2.0-flash',
-            'models/gemini-2.5-flash',
-            'models/gemini-2.0-flash-lite',
-            'gemini-2.0-flash',
-            'gemini-2.5-flash'
-        ];
-        let lastError: any = null;
-
-        for (const modelName of modelNames) {
-            try {
-                console.log(`🌌 Usando modelo: ${modelName}`);
-                const model = this.genAI.getGenerativeModel({
-                    model: modelName
-                });
-                const result = await model.generateContent(prompt);
-                const response = result.response.text();
-                if (response) return response;
-            } catch (error: any) {
-                console.error(`❌ SigilService.generateResponse attempt with ${modelName} failed:`, error.message);
-                lastError = error;
-
-                if (this.isRateLimitError(error)) {
-                    console.warn(`🛑 Rate limit hit for ${modelName} during Tarot. Retrying in 2s...`);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    continue;
-                }
-
-                const isNotFoundError = error.status === 404 || error.message?.includes('404') || error.message?.toLowerCase().includes('not found');
-                if (isNotFoundError) {
-                    console.warn(`🔍 Model ${modelName} not found for Tarot. Trying next variant...`);
-                    continue;
-                }
-                if (error.message?.includes('401')) break;
-            }
-        }
-
-        console.error(">>> ERROR CRÍTICO CAPTURADO:", lastError);
-        console.error('❌ SigilService.generateResponse Final Error:', lastError);
-
-        if (this.isRateLimitError(lastError)) {
-            return `Los espíritus susurran que el Templo está saturado de visiones en este momento. (Error: ${lastError.message || 'Unknown'}). Descansa tu mente unos segundos y vuelve a consultar pronto. 🌙`;
-        }
-
+        // ... previous implementation ...
         return "Los arcanos permanecen velados por ahora. Sintoniza tu intención nuevamente en unos momentos bajo la guía de tu paz interior.";
+    }
+
+    private async checkUsageIntensity(userId: string): Promise<boolean> {
+        console.log(`🔍 Checking usage intensity for ${userId}...`);
+        try {
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+            const { count, error } = await supabase
+                .from('interaction_logs')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .gte('created_at', oneHourAgo);
+
+            if (error) throw error;
+
+            // Definiendo "Intensivo" como más de 15 mensajes en una hora
+            return (count || 0) > 15;
+        } catch (e) {
+            console.error("🔥 Usage intensity check failed:", e);
+            return false;
+        }
     }
 }

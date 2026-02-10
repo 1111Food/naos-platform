@@ -1,12 +1,17 @@
 import React from 'react';
 import { Compass, Sparkles } from 'lucide-react';
+import { useActiveProfile } from '../hooks/useActiveProfile';
 
 interface FengShuiViewProps {
-    data: any;
+    data?: any; // Mantener por compatibilidad, pero no se usa
 }
 
-export const FengShuiView: React.FC<FengShuiViewProps> = ({ data }) => {
-    if (!data) return <div className="text-center text-white/50">Leyendo la energía de tu espacio...</div>;
+export const FengShuiView: React.FC<FengShuiViewProps> = () => {
+    // --- UNIFIED STATE (v9.16) ---
+    const { profile, loading } = useActiveProfile();
+    const data = profile?.fengShui;
+
+    if (loading || !data) return <div className="text-center text-white/50">Leyendo la energía de tu espacio...</div>;
 
     return (
         <div className="w-full max-w-xl mx-auto space-y-10 animate-in slide-in-from-bottom-4 duration-700">

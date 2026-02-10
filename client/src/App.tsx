@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { ChatInterface } from './components/ChatInterface';
 import { LandingScreen } from './components/LandingScreen';
@@ -18,6 +18,8 @@ import { PWAInstallButton } from './components/PWAInstallButton';
 import { EtherBackground } from './components/EtherBackground';
 import { Guardian } from './components/Guardian';
 import { GuardianProvider } from './contexts/GuardianContext';
+import { StatusBadge } from './components/StatusBadge';
+import { DevPlanToggle } from './components/DevPlanToggle';
 
 import { useEnergy } from './hooks/useEnergy';
 import { useProfile } from './hooks/useProfile';
@@ -27,47 +29,40 @@ type ViewState = 'LANDING' | 'ONBOARDING' | 'TEMPLE' | 'ASTRO' | 'NUMERO' | 'TAR
 
 function App() {
   const { energy } = useEnergy();
-  const { profile, updateProfile } = useProfile();
+  const { profile, updateProfile, availableProfiles, selectProfile, setTemporary } = useProfile();
   const { status, upgrade } = useSubscription();
 
   const [activeView, setActiveView] = useState<ViewState>('LANDING');
   const [sigilNotification, setSigilNotification] = useState<string | null>(null);
-  const [headerOpacity, setHeaderOpacity] = useState(1);
+  const [headerOpacity] = useState(1);
 
-  useEffect(() => {
-    document.documentElement.classList.add('dark');
-    console.log("App: Root component mounted. ActiveView:", activeView);
-
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const opacity = Math.max(0, 1 - scrollY / 150);
-      setHeaderOpacity(opacity);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    if (profile) {
-      console.log("App: Profile update detected:", profile.name, "| Has Astro:", !!profile.astrology);
-    }
-  }, [profile]);
+  // Manual-entry: Profile selection now requires explicit interaction
+  const handleSelectProfile = async (id: string) => {
+    await selectProfile(id);
+    setActiveView('TEMPLE');
+  };
 
   const handleOnboardingComplete = async (data: any) => {
-    console.log("App: Ritual Initiated. Data Received:", data.name);
-    try {
-      setSigilNotification(`Iniciando ritual para ${data.name}...`);
-      await updateProfile(data);
-      console.log("App: Profile update finished. Navigating to Temple.");
-      setActiveView('TEMPLE');
+    const { isTemp, ...profileData } = data;
+    console.log(`App: Ritual Initiated. Mode: ${isTemp ? 'TEMPORAL' : 'PERSISTENT'}`);
 
-      setSigilNotification(`¡Saludos, ${data.name}! He guardado tu esencia en el cosmos. Tu Pináculo Cotidiano y tu Carta Astral están listos.`);
+    try {
+      if (isTemp) {
+        setTemporary(true);
+        setSigilNotification("Iniciando consulta temporal...");
+        await updateProfile(profileData);
+        setActiveView('TEMPLE');
+      } else {
+        setSigilNotification(`Iniciando ritual para ${profileData.name}...`);
+        await updateProfile(profileData);
+        setActiveView('TEMPLE');
+        const displayName = profileData.nickname || profileData.name;
+        setSigilNotification(`¡El Templo te espera, ${displayName}! Tu esencia ha sido inscrita.`);
+      }
       setTimeout(() => setSigilNotification(null), 10000);
     } catch (e) {
       console.error("Ritual profile update failed", e);
-      setSigilNotification("Hubo un error guardando tus datos. Revisa la conexión.");
+      setSigilNotification("Hubo un error en la conexión ritual.");
       setActiveView('TEMPLE');
     }
   };
@@ -75,7 +70,18 @@ function App() {
   const renderContent = () => {
     switch (activeView) {
       case 'LANDING':
-        return <LandingScreen onEnter={() => setActiveView('ONBOARDING')} />;
+        return (
+          <LandingScreen
+            onEnter={() => setActiveView('ONBOARDING')}
+            availableProfiles={availableProfiles}
+            onSelectProfile={handleSelectProfile}
+            onTemporaryAccess={() => {
+              setTemporary(true);
+              setActiveView('ONBOARDING');
+            }}
+            subscriptionStatus={status}
+          />
+        );
       case 'ONBOARDING':
         return <OnboardingForm onComplete={handleOnboardingComplete} />;
       case 'TEMPLE':
@@ -112,6 +118,7 @@ function App() {
       <div className="min-h-screen text-foreground font-sans selection:bg-primary/30 overflow-x-hidden relative">
         <EtherBackground />
         <Guardian view={activeView} onOpenChat={() => setActiveView('CHAT')} />
+        <DevPlanToggle />
 
         <div className="relative z-10 min-h-screen flex flex-col animate-in fade-in duration-1000">
 
@@ -145,6 +152,7 @@ function App() {
               </div>
 
               <div className="flex items-center gap-6">
+                <StatusBadge plan={status?.plan || 'FREE'} className="hidden md:flex" />
                 <div className="flex flex-col items-end">
                   <span className="text-[10px] uppercase tracking-[0.3em] text-white/30 font-medium">Fase Lunar</span>
                   <span className="text-[10px] uppercase tracking-[0.2em] text-white/60">Luna Creciente 🌙</span>

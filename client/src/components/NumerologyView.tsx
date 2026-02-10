@@ -1,12 +1,38 @@
-import React from 'react';
-import { Hash } from 'lucide-react';
+import React, { useState } from 'react';
+import { Hash, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PINNACLE_INTERPRETATIONS } from '../data/pinnacleData';
+import { cn } from '../lib/utils';
+import { useGuardianState } from '../contexts/GuardianContext';
+import { useActiveProfile } from '../hooks/useActiveProfile';
 
 interface NumerologyViewProps {
-    data: any;
+    data?: any; // Mantener por compatibilidad, pero no se usa
 }
 
-export const NumerologyView: React.FC<NumerologyViewProps> = ({ data }) => {
-    if (!data) return <div className="text-center text-white/50 animate-pulse mt-12">Escuchando tu vibración numérica...</div>;
+export const NumerologyView: React.FC<NumerologyViewProps> = () => {
+    const [selectedPosition, setSelectedPosition] = useState<{ id: string, title: string, number: number } | null>(null);
+    const { trackEvent } = useGuardianState();
+    // --- UNIFIED STATE (v9.16) ---
+    const { profile, loading } = useActiveProfile();
+
+    // Obtener datos de numerología del perfil
+    const data = profile?.numerology;
+
+    if (loading || !data) return <div className="text-center text-white/50 animate-pulse mt-12">Escuchando tu vibración numérica...</div>;
+
+    const handleOpenModal = (id: string, title: string, number: any) => {
+        if (number === undefined || number === null || number === '?') return;
+        const numValue = Number(number);
+        setSelectedPosition({ id, title, number: numValue });
+
+        // Track event for Oracle Memory
+        trackEvent('PINNACLE', {
+            position: title,
+            number: numValue,
+            archetype: PINNACLE_INTERPRETATIONS[numValue]?.archetype || "Desconocido"
+        });
+    };
 
     return (
         <div className="w-full max-w-6xl mx-auto space-y-12 animate-in fade-in duration-1000 p-4">
@@ -151,10 +177,19 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({ data }) => {
                             { l: 'R', t: 'Ser Inferior Consciente', d: 'Defectos que conoces pero no cambias.', v: data.pinaculo?.r },
                             { l: 'S', t: 'Ser Inferior Latente', d: 'El enemigo oculto final.', v: data.pinaculo?.s },
                         ].map((item, idx) => (
-                            <div key={idx} className="group p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all cursor-default">
+                            <div
+                                key={idx}
+                                onClick={() => handleOpenModal(item.l, item.t, item.v)}
+                                className={cn(
+                                    "group p-4 rounded-2xl bg-white/5 border border-white/5 transition-all cursor-pointer",
+                                    (item.v !== undefined && item.v !== null && item.v !== '?')
+                                        ? "hover:bg-purple-500/10 hover:border-purple-500/30"
+                                        : "opacity-50 cursor-not-allowed"
+                                )}
+                            >
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-black border border-white/20 flex items-center justify-center text-xs font-bold text-white group-hover:bg-white group-hover:text-black transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-black border border-white/20 flex items-center justify-center text-xs font-bold text-white group-hover:bg-purple-500 group-hover:border-purple-400 transition-colors">
                                             {item.l}
                                         </div>
                                         <span className="text-sm font-bold text-white/90">{item.t}</span>
@@ -169,6 +204,75 @@ export const NumerologyView: React.FC<NumerologyViewProps> = ({ data }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Revelation Modal */}
+            <AnimatePresence>
+                {selectedPosition && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedPosition(null)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-2xl bg-black/60 border border-yellow-500/20 rounded-[2.5rem] p-8 md:p-12 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col max-h-[85vh]"
+                        >
+                            {/* Decorative Gold Corners */}
+                            <div className="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-yellow-500/10 rounded-tl-[2.5rem]" />
+                            <div className="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-yellow-500/10 rounded-br-[2.5rem]" />
+
+                            <button
+                                onClick={() => setSelectedPosition(null)}
+                                className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-all z-10"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            <div className="space-y-6 flex-shrink-0 mb-6">
+                                <div>
+                                    <span className="text-[10px] uppercase tracking-[0.3em] text-yellow-500/50 font-bold mb-2 block">Revelación del Pináculo</span>
+                                    <h2 className="text-3xl md:text-4xl font-serif text-white">{selectedPosition.title}</h2>
+                                </div>
+
+                                <div className="py-4 border-y border-white/5">
+                                    <div className="flex items-center gap-6">
+                                        <div className="text-6xl md:text-7xl font-serif text-yellow-500/80">{selectedPosition.number}</div>
+                                        <div>
+                                            <div className="text-[10px] uppercase tracking-wider text-white/30">Arquetipo Maestro</div>
+                                            <div className="text-xl font-serif text-white/90">
+                                                {PINNACLE_INTERPRETATIONS[selectedPosition.number]?.archetype || "El Buscador del Misterio"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="overflow-y-auto pr-4 custom-scrollbar space-y-8 flex-1">
+                                {PINNACLE_INTERPRETATIONS[selectedPosition.number]?.blocks ? (
+                                    PINNACLE_INTERPRETATIONS[selectedPosition.number].blocks.map((block, i) => (
+                                        <p key={i} className="text-lg leading-relaxed text-white/80 font-serif text-justify first-letter:text-4xl first-letter:font-bold first-letter:mr-2 first-letter:float-left first-letter:text-yellow-500/60">
+                                            {block}
+                                        </p>
+                                    ))
+                                ) : (
+                                    <p className="text-lg leading-relaxed text-white/80 font-serif italic text-justify">
+                                        La sabiduría para esta posición aún se encuentra velada bajo el manto del misterio. Sigo explorando tu vibración.
+                                    </p>
+                                )}
+
+                                <div className="pt-6 flex justify-center pb-4">
+                                    <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

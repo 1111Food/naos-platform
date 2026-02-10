@@ -1,5 +1,7 @@
-import fs from 'fs/promises';
+
+// server/src/modules/user/service.ts
 import path from 'path';
+import { promises as fs } from 'node:fs';
 import { UserProfile } from '../../types';
 import { AstrologyService } from '../astrology/astroService';
 import { GeocodingService } from './geocoding';
@@ -47,6 +49,11 @@ export class UserService {
     }
 
     static async getProfile(userId: string): Promise<UserProfile> {
+        if (!userId || userId === '00000000-0000-0000-0000-000000000000') {
+            // Default mock for first-time session (will be replaced by onboarding)
+            userId = '00000000-0000-0000-0000-000000000000';
+        }
+
         // Try Supabase first
         const { data, error } = await supabase
             .from('profiles')
@@ -55,9 +62,7 @@ export class UserService {
             .single();
 
         if (data && !error) {
-            // Reconstruct profile prioritizing discrete columns (Lovable Sync)
             const baseProfile = (data.profile_data || {}) as Partial<UserProfile>;
-
             const dbProfile: UserProfile = {
                 ...baseProfile,
                 id: data.id,
@@ -67,29 +72,26 @@ export class UserService {
                 birthCity: data.birth_location || baseProfile.birthCity || '',
                 astrology: data.natal_chart || baseProfile.astrology || undefined,
                 sigil_url: data.sigil_url || baseProfile.sigil_url || undefined,
-                // Protocol: Guarantee high precision coordinates and offset reconstruction
                 coordinates: baseProfile.coordinates || { lat: 14.634900, lng: -90.506900 },
                 utcOffset: baseProfile.utcOffset !== undefined ? baseProfile.utcOffset : -6,
-                // Ensure required base fields
                 birthPlace: baseProfile.birthPlace || '',
                 birthState: baseProfile.birthState || '',
                 birthCountry: baseProfile.birthCountry || 'Guatemala',
-                subscription: baseProfile.subscription || { plan: 'FREE', features: [] }
+                subscription: baseProfile.subscription || { plan: 'FREE', features: [] },
+                plan_type: data.plan_type || baseProfile.plan_type || 'free',
+                usage_level: data.usage_level || baseProfile.usage_level || 'normal',
+                daily_interactions: data.daily_interactions || baseProfile.daily_interactions || 0
             };
 
-            // SYNC LOCK: In production (Vercel), we MUST trust the DB offset
-            console.log(`📡 Vercel Parity: Restoring profile for ${dbProfile.name} (Offset: ${dbProfile.utcOffset})`);
-
-            // HOT FIX: Merge with local cache to preserve non-synced ritual fields
             if (Object.keys(profilesCache).length === 0) await this.loadProfiles();
             const cached = profilesCache[userId] || {};
-
             profilesCache[userId] = { ...cached, ...dbProfile };
-            return profilesCache[userId];
-        }
 
-        // Fallback to local memory/file if DB fails or empty (for MVP continuity)
-        if (Object.keys(profilesCache).length === 0) await this.loadProfiles();
+            // Continue to calc logic below
+        } else {
+            // Fallback to local memory/file if DB fails or empty (for MVP continuity)
+            if (Object.keys(profilesCache).length === 0) await this.loadProfiles();
+        }
 
         if (!profilesCache[userId]) {
             profilesCache[userId] = {
@@ -102,10 +104,57 @@ export class UserService {
                 birthState: '',
                 birthCountry: '',
                 coordinates: { lat: 40.7128, lng: -74.0060 },
-                subscription: { plan: 'FREE', features: ['basic_chat'] }
+                subscription: { plan: 'FREE', features: ['basic_chat'] },
+                plan_type: 'free',
+                usage_level: 'normal',
+                daily_interactions: 0
             };
             await this.saveProfiles();
         }
+
+        // --- DATA BRIDGE v9.12: JUST-IN-TIME CALCULATION ---
+        const p = profilesCache[userId];
+
+        // 1. Astrology Check
+        if (!p.astrology && p.birthDate && p.birthTime && p.coordinates) {
+            console.log(`🌉 DataBridge: Calculating Astrology for ${p.name}...`);
+            try {
+                const astro = await AstrologyService.calculateProfile(
+                    p.birthDate,
+                    p.birthTime,
+                    p.coordinates.lat || 0,
+                    p.coordinates.lng || 0,
+                    p.utcOffset !== undefined ? p.utcOffset : -6
+                );
+                // @ts-ignore
+                astro.elemental_balance = astro.elements; // Adapter
+                p.astrology = astro;
+                console.log("   -> Astrology Injected.");
+            } catch (e) { console.error("   -> Astro Calc Failed:", e); }
+        }
+
+        // 2. Numerology Check
+        if (!p.numerology && p.birthDate && p.name) {
+            console.log(`🌉 DataBridge: Calculating Numerology for ${p.name}...`);
+            p.numerology = NumerologyService.calculateProfile(p.birthDate, p.name);
+        }
+
+        // 3. Mayan Check
+        if (!p.mayan && p.birthDate) {
+            console.log(`🌉 DataBridge: Calculating Mayan for ${p.name}...`);
+            const mayanData = MayanCalculator.calculate(p.birthDate);
+            p.mayan = {
+                kicheName: mayanData.nawal_maya,
+                tone: mayanData.nawal_tono,
+                meaning: mayanData.meaning,
+                toneName: mayanData.toneName,
+                description: mayanData.description,
+                glyphUrl: mayanData.glyphUrl
+            };
+            p.nawal_maya = mayanData.nawal_maya;
+            p.nawal_tono = mayanData.nawal_tono;
+        }
+
         return profilesCache[userId];
     }
 
@@ -117,7 +166,9 @@ export class UserService {
 
         let updated = { ...current, ...data };
 
-        // 2. Geocoding & Timezone (Protocol: Geography Hardening)
+        console.log(`📋 Data received:`, JSON.stringify(data, null, 2));
+
+        // 2. Geocoding & Timezone (Protocol: Geography Hardening) - BULLETPROOF v9.15
         const locationStringsChanged = (data.birthCity && data.birthCity !== current.birthCity) ||
             (data.birthCountry && data.birthCountry !== current.birthCountry) ||
             (data.birthState && data.birthState !== current.birthState);
@@ -128,50 +179,70 @@ export class UserService {
 
         if (locationStringsChanged || !hasValidCoords) {
             if (updated.birthCity && updated.birthCountry) {
-                console.log(`🌍 Geography Protocol: Resolving final coordinates for ${updated.birthCity}...`);
-                const coords = await GeocodingService.getCoordinates(updated.birthCity, updated.birthState || '', updated.birthCountry);
+                console.log(`🌍 Geography Protocol: Resolving final coordinates for ${updated.birthCity}, ${updated.birthCountry}...`);
+                try {
+                    const coords = await GeocodingService.getCoordinates(updated.birthCity, updated.birthState || '', updated.birthCountry);
 
-                // FINAL FIX: Ensure precision and immutability
-                updated.coordinates = {
-                    lat: Math.round(coords.lat * 1000000) / 1000000,
-                    lng: Math.round(coords.lng * 1000000) / 1000000
-                };
-                updated.utcOffset = await GeocodingService.getTimezoneOffset(updated.coordinates.lat, updated.coordinates.lng);
-                console.log(`🔒 Geography LOCK Persisted: ${updated.coordinates.lat}, ${updated.coordinates.lng}`);
+                    // FINAL FIX: Ensure precision and immutability
+                    updated.coordinates = {
+                        lat: Math.round(coords.lat * 1000000) / 1000000,
+                        lng: Math.round(coords.lng * 1000000) / 1000000
+                    };
+                    updated.utcOffset = await GeocodingService.getTimezoneOffset(updated.coordinates.lat, updated.coordinates.lng);
+                    console.log(`   ✅ Geography LOCK Persisted: ${updated.coordinates.lat}, ${updated.coordinates.lng}`);
+                } catch (geoError) {
+                    console.error(`   ⚠️ Geocoding failed for "${updated.birthCity}, ${updated.birthCountry}":`, geoError);
+                    console.log(`   🔄 Using fallback coordinates (Guatemala City)`);
+                    // Fallback: Guatemala City coordinates
+                    updated.coordinates = { lat: 14.6349, lng: -90.5069 };
+                    updated.utcOffset = -6;
+                }
             }
         }
 
-        // 3. Spiritual Calculations
+        // 3. Spiritual Calculations - BULLETPROOF v9.15
         console.log("   -> ✨ Calculating Spiritual Core...");
 
-        // Numerology
-        updated.numerology = NumerologyService.calculateProfile(updated.birthDate, updated.name);
-
-        // Mayan Nawal
-        if (updated.birthDate) {
-            console.log("   -> 🐆 Calculating Mayan Nawal (Cholq'ij)...");
-            const mayanData = MayanCalculator.calculate(updated.birthDate);
-
-            // Map to internal MayanNawal interface/structure but keep requested persist keys
-            updated.mayan = {
-                kicheName: mayanData.nawal_maya,
-                tone: mayanData.nawal_tono,
-                meaning: mayanData.meaning,
-                toneName: mayanData.toneName,
-                description: mayanData.description,
-                glyphUrl: mayanData.glyphUrl
-            };
-
-            // Save requested specific fields to top-level profile (persisted in JSONB)
-            updated.nawal_maya = mayanData.nawal_maya;
-            updated.nawal_tono = mayanData.nawal_tono;
-
-            console.log(`      Found: ${updated.mayan.tone} ${updated.mayan.kicheName}`);
+        // Numerology - BULLETPROOF
+        try {
+            console.log("   -> 🔢 Calculating Numerology...");
+            updated.numerology = NumerologyService.calculateProfile(updated.birthDate, updated.name);
+            console.log(`      ✅ Numerology calculated successfully`);
+        } catch (numError) {
+            console.error("      ⚠️ Numerology calculation failed:", numError);
+            updated.numerology = undefined;
         }
 
-        // Astrology (Offline) - Strictly using persisted/locked coordinates
+        // Mayan Nawal - BULLETPROOF
+        if (updated.birthDate) {
+            try {
+                console.log("   -> 🐆 Calculating Mayan Nawal (Cholq'ij)...");
+                const mayanData = MayanCalculator.calculate(updated.birthDate);
+
+                // Map to internal MayanNawal interface/structure but keep requested persist keys
+                updated.mayan = {
+                    kicheName: mayanData.nawal_maya,
+                    tone: mayanData.nawal_tono,
+                    meaning: mayanData.meaning,
+                    toneName: mayanData.toneName,
+                    description: mayanData.description,
+                    glyphUrl: mayanData.glyphUrl
+                };
+
+                // Save requested specific fields to top-level profile (persisted in JSONB)
+                updated.nawal_maya = mayanData.nawal_maya;
+                updated.nawal_tono = mayanData.nawal_tono;
+
+                console.log(`      ✅ Found: ${updated.mayan.tone} ${updated.mayan.kicheName}`);
+            } catch (mayanError) {
+                console.error("      ⚠️ Mayan calculation failed:", mayanError);
+                updated.mayan = undefined;
+            }
+        }
+
+        // Astrology (Offline) - Strictly using persisted/locked coordinates - BULLETPROOF
         try {
-            console.log(`🌌 Astrology Core: Calculating with pinned coords [${updated.coordinates.lat}, ${updated.coordinates.lng}]`);
+            console.log(`   -> 🌌 Astrology Core: Calculating with pinned coords [${updated.coordinates.lat}, ${updated.coordinates.lng}]`);
             const astro = await AstrologyService.calculateProfile(
                 updated.birthDate,
                 updated.birthTime,
@@ -182,103 +253,48 @@ export class UserService {
             // @ts-ignore
             astro.elemental_balance = astro.elements;
             updated.astrology = astro;
-        } catch (e) {
-            console.error("❌ Astrology Engine Failed (Safe Fallback)");
+            console.log(`      ✅ Astrology calculated successfully`);
+        } catch (astroError) {
+            console.error("      ⚠️ Astrology Engine Failed (Safe Fallback):", astroError);
+            updated.astrology = undefined;
         }
 
-        // Feng Shui
-        updated.fengShui = FengShuiProfileService.calculateProfile(updated.birthDate);
-
-        // SILENT EXPANSION: Chinese Astrology
-        if (updated.birthDate) {
-            console.log("   -> 🐉 Calculating Chinese Wisdom...");
-            const chinese = ChineseAstrology.calculate(updated.birthDate);
-            updated.chinese_animal = chinese.animal;
-            updated.chinese_element = chinese.element;
-            updated.chinese_birth_year = chinese.birthYear;
-
-            // Persist description in profile_data for UI flexibility
-            // @ts-ignore
-            updated.chinese_description = chinese.description;
-        }
-
-        // 4. Sigil Asset (Connected logic)
-        if (!updated.sigil_url) {
-            console.log("   -> ✍️ Generating Sigil Essence...");
-            updated.sigil_url = `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(updated.name)}&backgroundColor=0a0a0a&color=f59e0b`;
-        }
-
-        // 5. Persist to Supabase
-        console.log("   -> 📦 PASO FINAL: Enviando a Supabase via Node.js Proxy...");
-        console.log("   -> Columnas:", {
-            full_name: updated.name,
-            birth_date: updated.birthDate,
-            birth_time: updated.birthTime,
-            birth_location: updated.birthCity
-        });
-
+        // Feng Shui - BULLETPROOF
         try {
-            // Helper to safely extract planet data
-            const getPlanet = (profile: any, name: string) => {
-                if (!profile || !profile.planets) return null;
-                const p = profile.planets.find((b: any) => b.name === name);
-                return p ? p : null;
-            };
-
-            const lilith = getPlanet(updated.astrology, 'Lilith');
-            const chiron = getPlanet(updated.astrology, 'Chiron');
-            const northNode = getPlanet(updated.astrology, 'North Node') || getPlanet(updated.astrology, 'Node');
-
-            const { error } = await supabase
-                .from('profiles')
-                .upsert({
-                    id: userId,
-                    full_name: updated.name || 'Viajero cosmico',
-                    birth_date: updated.birthDate || null,
-                    birth_time: updated.birthTime || null,
-                    birth_location: updated.birthCity || null,
-                    natal_chart: updated.astrology || null,
-                    sigil_url: updated.sigil_url || null,
-                    chinese_animal: updated.chinese_animal || null,
-                    chinese_element: updated.chinese_element || null,
-                    chinese_birth_year: updated.chinese_birth_year || null,
-                    profile_data: updated // FIXED: Persist all fields (coords, offset, etc) for Vercel parity
-                });
-
-            if (error) {
-                console.error("❌ PROXY SUPABASE FAILURE:");
-                console.error("   -> Error Code:", error.code);
-                console.error("   -> Message:", error.message);
-                if (error.code === 'PGRST204') {
-                    console.error("   ⚠️  MODEL MISMATCH: Some columns (birth_date, birth_time, birth_location) might be missing in your Supabase table.");
-                }
-            } else {
-                console.log("✅ PROXY SUCCESS: Supabase Upsert Success!");
-            }
-        } catch (dbErr) {
-            console.error("🔥 CRITICAL SUPABASE CRASH:", dbErr);
+            console.log("   -> 🏠 Calculating Feng Shui...");
+            updated.fengShui = FengShuiService.calculateProfile(updated.birthDate);
+            console.log(`      ✅ Feng Shui calculated successfully`);
+        } catch (fengError) {
+            console.error("      ⚠️ Feng Shui calculation failed:", fengError);
+            updated.fengShui = undefined;
         }
 
-        // Fallback Cache
-        console.log("   -> 📝 PRE-SAVE CHECK: Elements:", updated.astrology?.elements);
+        // Update Cache
+        if (Object.keys(profilesCache).length === 0) await this.loadProfiles();
         profilesCache[userId] = updated;
         await this.saveProfiles();
 
+        // 4. Supabase Sync (Si hay credenciales)
+        if (config.SUPABASE_URL) {
+            const { error: upsertError } = await supabase
+                .from('profiles')
+                .upsert({
+                    id: userId,
+                    full_name: updated.name,
+                    birth_date: updated.birthDate,
+                    birth_time: updated.birthTime,
+                    birth_location: updated.birthCity,
+                    // Persist calculated data
+                    natal_chart: updated.astrology,
+                    plan_type: updated.plan_type,
+                    profile_data: updated, // JSONB dump for flexibility
+                    updated_at: new Date().toISOString()
+                });
+
+            if (upsertError) console.error("Supabase Sync Error:", upsertError);
+            else console.log("☁️ Supabase Synced.");
+        }
+
         return updated;
     }
-
-    static getRawState() {
-        return {
-            cacheKeys: Object.keys(profilesCache),
-            data: profilesCache,
-            paths: {
-                cwd: process.cwd(),
-                DATA_DIR,
-                PROFILES_FILE
-            }
-        };
-    }
 }
-
-// Small fix for class name consistency in imports if needed
-const FengShuiProfileService = FengShuiService;

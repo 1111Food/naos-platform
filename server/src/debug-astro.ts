@@ -1,5 +1,5 @@
 
-import { AstrologyService } from './modules/astrology/service';
+import { AstrologyService } from './modules/astrology/astroService';
 
 // DEBUG SCRIPT: Test specific user case
 // Run with: npx tsx src/debug-astro.ts

@@ -1,5 +1,5 @@
 export interface SubscriptionStatus {
-    plan: 'FREE' | 'PREMIUM';
+    plan: 'FREE' | 'PREMIUM' | 'EXTENDED';
     validUntil?: string; // ISO Date
     features: string[];
 }
@@ -20,6 +20,9 @@ export interface UserProfile {
         lng: number;
     };
     subscription: SubscriptionStatus;
+    plan_type: 'free' | 'premium' | 'premium_plus';
+    usage_level: 'normal' | 'frequent' | 'intensive';
+    daily_interactions: number;
     astrology?: AstrologyProfile;
     numerology?: NumerologyProfile;
     fengShui?: FengShuiProfile;

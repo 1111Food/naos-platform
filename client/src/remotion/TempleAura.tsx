@@ -1,6 +1,6 @@
 // PADDING TO PROTECT AGAINST CORRUPTION
 // PADDING TO PROTECT AGAINST CORRUPTION
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig, random } from 'remotion';
+import { AbsoluteFill, useCurrentFrame, interpolate, useVideoConfig, random } from 'remotion';
 import { useMemo } from 'react';
 
 const SYMBOLS = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓", "1", "3", "7", "9", "11", "33"];
@@ -57,14 +57,9 @@ export const TempleAura = () => {
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
 
-    const beat = spring({
-        frame: frame % 60,
-        fps,
-        config: { damping: 10, stiffness: 100 }
-    });
-
-    // const glowOpacity = interpolate(beat, [0, 1], [0.3, 0.8]); // Removed after logo integration.业务
-    const scaleLogo = interpolate(beat, [0, 1], [1, 1.05]);
+    // Respiración Sagrada: Ciclo de 8 segundos (4s inhalar, 4s exhalar)
+    const breathingCycle = Math.sin((frame / (fps * 8)) * Math.PI * 2);
+    const scaleLogo = interpolate(breathingCycle, [-1, 1], [1, 1.03]);
 
     const particles = useMemo(() => {
         return new Array(40).fill(0).map((_, i) => ({

@@ -40,30 +40,35 @@ export async function apiRoutes(app: FastifyInstance) {
     });
 
     // Chat
-    app.post<{ Body: { message: string, localTimestamp?: string } }>('/api/chat', async (req, reply) => {
-        const { message, localTimestamp } = req.body;
-        return sigilService.processMessage(currentUserId, message, localTimestamp);
+    app.post<{ Body: { message: string, localTimestamp?: string, oracleState?: any } }>('/api/chat', async (req, reply) => {
+        const { message, localTimestamp, oracleState } = req.body;
+        const profileId = (req.headers['x-profile-id'] as string) || currentUserId;
+        return sigilService.processMessage(profileId, message, localTimestamp, oracleState);
     });
 
     // Energy
     app.get('/api/energy', async (req, reply) => {
-        const user = await UserService.getProfile(currentUserId);
+        const profileId = (req.headers['x-profile-id'] as string) || currentUserId;
+        const user = await UserService.getProfile(profileId);
         return EnergyService.getDailySnapshot(user);
     });
 
     // Profile
     app.get('/api/profile', async (req, reply) => {
-        return UserService.getProfile(currentUserId);
+        const profileId = (req.headers['x-profile-id'] as string) || currentUserId;
+        return UserService.getProfile(profileId);
     });
 
     app.put<{ Body: Partial<UserProfile> }>('/api/profile', async (req, reply) => {
-        return UserService.updateProfile(currentUserId, req.body);
+        const profileId = (req.headers['x-profile-id'] as string) || currentUserId;
+        return UserService.updateProfile(profileId, req.body);
     });
 
     app.post<{ Body: Partial<UserProfile> }>('/api/profile', async (req, reply) => {
-        console.log('✅ DATO RECIBIDO DEL CLIENTE:', req.body.name || 'Sin nombre');
+        const profileId = (req.headers['x-profile-id'] as string) || currentUserId;
+        console.log('✅ DATO RECIBIDO DEL CLIENTE:', req.body.name || 'Sin nombre', '| ID:', profileId);
         try {
-            const result = await UserService.updateProfile(currentUserId, req.body);
+            const result = await UserService.updateProfile(profileId, req.body);
             return result;
         } catch (err) {
             console.error('🔥 Error en POST /api/profile:', err);
@@ -73,16 +78,24 @@ export async function apiRoutes(app: FastifyInstance) {
 
     // Subscription
     app.get('/api/subscription', async (req, reply) => {
-        return SubscriptionService.getStatus(currentUserId);
+        const profileId = (req.headers['x-profile-id'] as string) || currentUserId;
+        return SubscriptionService.getStatus(profileId);
     });
 
     app.post('/api/subscription/upgrade', async (req, reply) => {
-        return SubscriptionService.upgradePlan(currentUserId);
+        const profileId = (req.headers['x-profile-id'] as string) || currentUserId;
+        return SubscriptionService.upgradePlan(profileId);
     });
 
     // Tarot
     app.get('/api/tarot/yes-no', async (req, reply) => {
         return TarotService.drawYesNo();
+    });
+
+    app.get('/api/profiles/multiget', async (req, reply) => {
+        const ids = (req.query as any).ids?.split(',') || [];
+        const profiles = await Promise.all(ids.map((id: string) => UserService.getProfile(id)));
+        return profiles.map(p => ({ id: p.id, name: p.name }));
     });
 
     app.get('/api/tarot/celta', async (req, reply) => {
@@ -91,7 +104,8 @@ export async function apiRoutes(app: FastifyInstance) {
 
     // Numerology
     app.get('/api/numerology', async (req, reply) => {
-        const user = await UserService.getProfile(currentUserId);
+        const profileId = (req.headers['x-profile-id'] as string) || currentUserId;
+        const user = await UserService.getProfile(profileId);
         return NumerologyService.calculateProfile(user.birthDate, user.name);
     });
 

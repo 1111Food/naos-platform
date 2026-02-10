@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Flower2, Repeat } from 'lucide-react';
 import { endpoints } from '../lib/api';
 import { cn } from '../lib/utils';
+import { useGuardianState } from '../contexts/GuardianContext';
 
 export const TarotView: React.FC = () => {
     const [reading, setReading] = useState<any>(null);
     const [loading, setLoading] = useState(false);
+    const { trackEvent } = useGuardianState();
 
     const drawCard = async () => {
         setLoading(true);
@@ -13,6 +15,7 @@ export const TarotView: React.FC = () => {
             const res = await fetch(endpoints.tarot);
             const data = await res.json();
             setReading(data);
+            trackEvent('TAROT', { card: data.card, meaning: data.meaning, answer: data.answer });
         } catch (e) {
             console.error(e);
         } finally {

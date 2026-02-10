@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { endpoints } from '../lib/api';
+import { useGuardianState } from '../contexts/GuardianContext';
 
 interface Message {
     role: 'user' | 'model';
@@ -7,6 +8,8 @@ interface Message {
 }
 
 export function useSigil(userName?: string) {
+    const { oracleState } = useGuardianState();
+
     const getWelcomeMessage = useCallback(() => {
         // Clean name to avoid "L.." if the name already has a dot
         const cleanName = (userName || 'Viajero').replace(/\.+$/, '');
@@ -35,7 +38,8 @@ export function useSigil(userName?: string) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: text,
-                    localTimestamp: new Date().toISOString()
+                    localTimestamp: new Date().toISOString(),
+                    oracleState // Inyección de consciencia mística
                 })
             });
 

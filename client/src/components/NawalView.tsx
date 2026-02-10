@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Sparkles, Sun, Calendar } from 'lucide-react';
+import { ArrowLeft, Sparkles, Sun, Calendar, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useProfile } from '../hooks/useProfile';
+import { useActiveProfile } from '../hooks/useActiveProfile';
+import { useProfile } from '../contexts/ProfileContext';
+import { NAHUAL_WISDOM } from '../data/nahualData';
+import { useGuardianState } from '../contexts/GuardianContext';
 
 
 // Placeholder for glyph path logic if needed, or use image
@@ -28,22 +31,13 @@ interface NawalViewProps {
 }
 
 export const NawalView: React.FC<NawalViewProps> = ({ onBack }) => {
-    const { profile, updateProfile, loading: isLoading } = useProfile();
+    // --- UNIFIED STATE (v9.16) ---
+    const { profile, loading: isLoading } = useActiveProfile();
+    const { updateProfile } = useProfile(); // Para actualización manual de fecha
     const [inputDate, setInputDate] = useState('');
     const [calculating, setCalculating] = useState(false);
-
-    // Effect to auto-calculate if birthdate exists but mayan data missing
-    useEffect(() => {
-        if (profile?.birthDate && !profile.mayan && !calculating) {
-            setCalculating(true);
-            // Re-trigger update to force calculation on backend? 
-            // Actually check if we need to locally wait or trigger something.
-            // If profile exists, backend should have calculated it. 
-            // If not, maybe we need to poke it.
-            // For now, assume if birthDate is there, data should be coming.
-            setTimeout(() => setCalculating(false), 3000); // Fake timeout if backend is slow
-        }
-    }, [profile]);
+    const [showModal, setShowModal] = useState(false);
+    const { trackEvent } = useGuardianState();
 
     const handleDateSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -61,6 +55,14 @@ export const NawalView: React.FC<NawalViewProps> = ({ onBack }) => {
     };
 
     const nawal = profile?.mayan;
+
+    const handleOpenModal = () => {
+        if (!nawal) return;
+        setShowModal(true);
+
+        // Track for Oracle Memory
+        trackEvent('ASTRO', `Consultó profundidad del Nahual ${nawal.kicheName}`);
+    };
 
     return (
         <div className="min-h-screen bg-black text-[#D4AF37] p-6 flex flex-col items-center relative overflow-hidden">
@@ -144,9 +146,18 @@ export const NawalView: React.FC<NawalViewProps> = ({ onBack }) => {
                                 initial={{ rotate: -180, opacity: 0 }}
                                 animate={{ rotate: 0, opacity: 1 }}
                                 transition={{ duration: 1, type: "spring" }}
-                                className="mb-8"
+                                className="mb-8 cursor-pointer group"
+                                onClick={handleOpenModal}
+                                whileHover={{ scale: 1.05 }}
                             >
                                 <GlyphPlaceholder tone={nawal.tone} />
+                                <motion.div
+                                    className="mt-4 text-[#D4AF37]/40 text-[10px] uppercase tracking-[0.2em] font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                                    animate={{ y: [0, 5, 0] }}
+                                    transition={{ repeat: Infinity, duration: 2 }}
+                                >
+                                    Presiona para profundizar
+                                </motion.div>
                             </motion.div>
 
                             <div className="space-y-2 mb-8">
@@ -177,6 +188,93 @@ export const NawalView: React.FC<NawalViewProps> = ({ onBack }) => {
                     )}
                 </AnimatePresence>
             </main>
+
+            {/* Nahual Detail Modal (Códice Sagrado) */}
+            <AnimatePresence>
+                {showModal && nawal && NAHUAL_WISDOM[nawal.kicheName] && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowModal(false)}
+                            className="absolute inset-0 bg-black/90 backdrop-blur-xl"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-2xl bg-[#0a0a0a] border border-[#D4AF37]/20 rounded-[2.5rem] p-8 md:p-12 shadow-[0_0_100px_rgba(212,175,55,0.1)] overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            {/* Decorative Corners */}
+                            <div className="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-[#D4AF37]/10 rounded-tl-[2.5rem]" />
+                            <div className="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-[#D4AF37]/10 rounded-br-[2.5rem]" />
+
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="absolute top-8 right-8 p-2 rounded-full bg-white/5 hover:bg-white/10 text-[#D4AF37]/40 hover:text-[#D4AF37] transition-all z-10"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+
+                            {/* Modal Content */}
+                            <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
+                                <div className="flex flex-col items-center text-center mb-10">
+                                    <div className="w-32 h-32 rounded-full border-2 border-[#D4AF37]/30 flex items-center justify-center mb-6 bg-gradient-to-b from-[#1a1a1a] to-black shadow-[0_0_30px_rgba(212,175,55,0.15)]">
+                                        <span className="text-5xl">🌞</span> {/* Future: Replace with real SVG glyph */}
+                                    </div>
+                                    <span className="text-[10px] uppercase tracking-[0.4em] text-[#D4AF37]/60 font-bold mb-2">Libro del Destino</span>
+                                    <h2 className="text-4xl md:text-5xl font-serif text-transparent bg-clip-text bg-gradient-to-b from-[#FFF8E7] to-[#D4AF37] uppercase tracking-tighter">
+                                        {nawal.kicheName}
+                                    </h2>
+                                    <p className="text-[#D4AF37] font-serif italic text-xl mt-2">{NAHUAL_WISDOM[nawal.kicheName].meaning}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-10">
+                                    <div className="bg-white/5 border border-[#D4AF37]/10 rounded-2xl p-4 text-center">
+                                        <span className="block text-[10px] uppercase tracking-widest text-[#D4AF37]/50 mb-1">Tótem</span>
+                                        <span className="text-white font-serif text-lg">{NAHUAL_WISDOM[nawal.kicheName].totem}</span>
+                                    </div>
+                                    <div className="bg-white/5 border border-[#D4AF37]/10 rounded-2xl p-4 text-center">
+                                        <span className="block text-[10px] uppercase tracking-widest text-[#D4AF37]/50 mb-1">Elemento</span>
+                                        <span className="text-white font-serif text-lg">{NAHUAL_WISDOM[nawal.kicheName].element}</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-10 pb-8">
+                                    <div className="space-y-4">
+                                        <h4 className="text-[#D4AF37]/60 font-serif uppercase tracking-widest text-xs border-b border-[#D4AF37]/10 pb-2">Esencia del Signo</h4>
+                                        <p className="text-lg leading-relaxed text-[#FFF8E7]/90 font-serif text-justify">
+                                            {NAHUAL_WISDOM[nawal.kicheName].description}
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className="text-emerald-400/60 font-serif uppercase tracking-widest text-xs border-b border-emerald-400/10 pb-2">Personalidad (Luz)</h4>
+                                        <p className="text-lg leading-relaxed text-[#FFF8E7]/90 font-serif text-justify">
+                                            {NAHUAL_WISDOM[nawal.kicheName].personality_light}
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className="text-rose-400/60 font-serif uppercase tracking-widest text-xs border-b border-rose-400/10 pb-2">Desafíos (Sombra)</h4>
+                                        <p className="text-lg leading-relaxed text-[#FFF8E7]/90 font-serif text-justify italic">
+                                            {NAHUAL_WISDOM[nawal.kicheName].personality_shadow}
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-4 bg-[#D4AF37]/5 p-6 rounded-3xl border border-[#D4AF37]/10">
+                                        <h4 className="text-[#D4AF37] font-serif uppercase tracking-widest text-xs text-center mb-4">Misión y Legado</h4>
+                                        <p className="text-xl leading-relaxed text-[#FFF8E7] font-serif text-center italic">
+                                            "{NAHUAL_WISDOM[nawal.kicheName].legacy}"
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

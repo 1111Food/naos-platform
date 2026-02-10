@@ -7,6 +7,7 @@ interface OnboardingFormProps {
 export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) => {
     const [formData, setFormData] = useState({
         name: '',
+        nickname: '',
         email: '',
         birthDate: '',
         birthTime: '12:00',
@@ -14,11 +15,32 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
         birthState: '', // Kept for backend compatibility but not shown in form
         birthCountry: '',
     });
+    const [saveProfile, setSaveProfile] = useState(true);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.name || !formData.birthDate || !formData.birthCity) return;
-        onComplete(formData);
+
+        // --- PERSISTENCIA FORZADA (v9.14) ---
+        // Guardar SIEMPRE en localStorage antes de llamar al backend
+        // Esto asegura que los datos estén disponibles incluso si la API falla
+        const profileData = { ...formData, isTemp: !saveProfile };
+
+        try {
+            localStorage.setItem('user_profile', JSON.stringify(profileData));
+            localStorage.setItem('naos_active_profile_id', saveProfile ? 'new-profile' : 'temp');
+            console.log("✅ GUARDADO EXITOSO EN 5174 (localStorage):", profileData);
+            console.log("   - Nombre:", profileData.name);
+            console.log("   - Nickname:", profileData.nickname);
+            console.log("   - Fecha:", profileData.birthDate);
+            console.log("   - Hora:", profileData.birthTime);
+            console.log("   - Lugar:", profileData.birthCity, profileData.birthCountry);
+        } catch (err) {
+            console.error("❌ Error guardando en localStorage:", err);
+        }
+
+        // Ahora sí, llamar al backend (que puede fallar sin romper la app)
+        onComplete(profileData);
     };
 
     return (
@@ -45,6 +67,18 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                                 className="ceremonial-input"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
+
+                        {/* Field: Nickname (New) */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-amber-500/60 block">APODO / NICKNAME</label>
+                            <input
+                                type="text"
+                                placeholder="¿Cómo te llama el Sigilo?"
+                                className="ceremonial-input border-amber-500/20 focus:border-amber-500/50 text-amber-100 placeholder:text-amber-500/20"
+                                value={formData.nickname}
+                                onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
                             />
                         </div>
 
@@ -114,6 +148,16 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({ onComplete }) =>
                             <p className="text-[9px] text-white/20 uppercase tracking-[0.2em] mt-6 italic text-center leading-relaxed">
                                 Sigil trazará las coordenadas exactas de las estrellas en el momento de tu llegada.
                             </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl group cursor-pointer" onClick={() => setSaveProfile(!saveProfile)}>
+                        <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-all ${saveProfile ? 'bg-amber-500 border-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : 'border-white/20 bg-transparent'}`}>
+                            {saveProfile && <span className="text-black text-xs font-bold">✓</span>}
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-[10px] font-bold text-white/80 uppercase tracking-widest">Guardar mi esencia</p>
+                            <p className="text-[9px] text-white/30 uppercase tracking-widest mt-0.5">Recordar este perfil permanentemente en el templo.</p>
                         </div>
                     </div>
 

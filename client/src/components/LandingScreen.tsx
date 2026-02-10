@@ -1,11 +1,26 @@
 import { ArrowRight } from 'lucide-react';
 import { useTimeBasedMode } from '../hooks/useTimeBasedMode';
+import { StatusBadge } from './StatusBadge';
 
 interface LandingScreenProps {
     onEnter: () => void;
+    availableProfiles: {
+        id: string;
+        name: string;
+        nickname?: string;
+    }[];
+    onSelectProfile: (id: string) => void;
+    onTemporaryAccess: () => void;
+    subscriptionStatus?: any;
 }
 
-export const LandingScreen: React.FC<LandingScreenProps> = ({ onEnter }) => {
+export const LandingScreen: React.FC<LandingScreenProps> = ({
+    onEnter,
+    availableProfiles,
+    onSelectProfile,
+    onTemporaryAccess,
+    subscriptionStatus
+}) => {
     const timeMode = useTimeBasedMode();
 
     return (
@@ -39,23 +54,68 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({ onEnter }) => {
                 <img
                     src="/logo-naos.png?v=2"
                     alt="NAOS"
-                    className="w-[350px] md:w-[400px] max-w-[90%] h-auto mb-8 drop-shadow-[0_0_30px_rgba(255,215,0,0.3)] animate-in fade-in zoom-in duration-1000"
+                    className="w-[350px] md:w-[400px] max-w-[90%] h-auto mb-4 drop-shadow-[0_0_30px_rgba(255,215,0,0.3)]"
                 />
 
+                <div className="mb-8">
+                    <StatusBadge plan={subscriptionStatus?.plan || 'FREE'} />
+                </div>
+
                 <p className="text-lg md:text-xl text-primary/80 font-light tracking-[0.2em] uppercase mb-10">
-                    Conecta con tu Alma
+                    {availableProfiles.length > 0
+                        ? `El Templo te espera${availableProfiles.length === 1 && availableProfiles[0].nickname ? `, ${availableProfiles[0].nickname}` : ''}`
+                        : 'Conecta con tu Alma'}
                 </p>
 
-                <button
-                    onClick={onEnter}
-                    className="group relative px-12 py-5 bg-white/5 border border-white/10 rounded-full overflow-hidden transition-all hover:border-primary/50 hover:bg-white/10"
-                >
-                    <span className="relative z-10 text-white font-serif italic text-xl flex items-center gap-3">
-                        Ingresar al Templo
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                </button>
+                <div className="flex flex-col gap-4 w-full max-w-sm">
+                    {availableProfiles.length > 0 ? (
+                        <>
+                            <p className="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-2 italic">¿Con qué energía deseas entrar?</p>
+                            {availableProfiles.map(p => {
+                                const displayName = p.nickname || p.name;
+                                const isCreator = p.name.includes('Luis') || (p.nickname && p.nickname.includes('Luis')); // Simple check
+
+                                return (
+                                    <button
+                                        key={p.id}
+                                        onClick={() => onSelectProfile(p.id)}
+                                        className={`group relative px-8 py-4 ${isCreator ? 'bg-amber-900/10 border-amber-500/30 hover:border-amber-500/80 hover:bg-amber-900/20' : 'bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10'} rounded-full overflow-hidden transition-all text-white font-serif italic text-lg flex items-center justify-center gap-3`}
+                                    >
+                                        {isCreator && <span className="text-xl">👑</span>}
+                                        <span className="capitalize">{displayName}</span>
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform opacity-50" />
+                                    </button>
+                                );
+                            })}
+                            <button
+                                onClick={onEnter}
+                                className="mt-4 text-[10px] uppercase tracking-[0.3em] text-white/30 hover:text-white transition-colors"
+                            >
+                                + Crear Nuevo Sigil
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            onClick={onEnter}
+                            className="group relative px-12 py-5 bg-white/5 border border-white/10 rounded-full overflow-hidden transition-all hover:border-primary/50 hover:bg-white/10"
+                        >
+                            <span className="relative z-10 text-white font-serif italic text-xl flex items-center gap-3">
+                                Ingresar al Templo
+                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                        </button>
+                    )}
+
+                    <button
+                        onClick={onTemporaryAccess}
+                        className="mt-6 text-[9px] uppercase tracking-[0.4em] text-white/20 hover:text-white/40 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <span className="w-1 h-1 rounded-full bg-white/20" />
+                        Consulta Temporal (Olvido Sagrado)
+                        <span className="w-1 h-1 rounded-full bg-white/20" />
+                    </button>
+                </div>
             </div>
 
             <div className="absolute bottom-8 text-white/30 text-xs tracking-widest uppercase">

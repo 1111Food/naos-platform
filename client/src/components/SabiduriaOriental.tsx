@@ -1,11 +1,34 @@
-import { Scroll, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Scroll, Sparkles, Lock, BookOpen } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useProfile } from '../hooks/useProfile';
+import { useGuardianState } from '../contexts/GuardianContext';
+import { CHINESE_ZODIAC_WISDOM } from '../data/chineseZodiacData';
+import { ZodiacPergaminoModal } from './ZodiacPergaminoModal';
 
 interface SabiduriaOrientalProps {
     profile?: any;
 }
 
-export const SabiduriaOriental: React.FC<SabiduriaOrientalProps> = ({ profile }) => {
+export const SabiduriaOriental: React.FC<SabiduriaOrientalProps> = ({ profile: initialProfile }) => {
+    const { profile: hookProfile } = useProfile();
+    const profile = initialProfile || hookProfile;
+    const { trackEvent } = useGuardianState();
+    const [showZodiacModal, setShowZodiacModal] = useState(false);
+
+    const isPremium = profile?.subscription?.plan === 'PREMIUM' || profile?.subscription?.plan === 'TRIAL';
+    const animalData = profile?.chinese_animal ? CHINESE_ZODIAC_WISDOM[profile.chinese_animal] : null;
     const elementDescription = profile?.chinese_element ? getElementWisdom(profile.chinese_element) : '';
+
+    const handleOpenZodiacDetails = () => {
+        if (!animalData) return;
+        setShowZodiacModal(true);
+        trackEvent('ORIENTAL', {
+            animal: profile.chinese_animal,
+            action: 'OPEN_PERGAMINO',
+            year: 2026
+        });
+    };
 
     if (!profile?.birthDate) {
         return (
@@ -39,30 +62,39 @@ export const SabiduriaOriental: React.FC<SabiduriaOrientalProps> = ({ profile })
                     </div>
                     <div>
                         <h2 className="text-[12px] uppercase tracking-[0.4em] text-rose-500 font-bold">Sabiduría Oriental</h2>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-amber-500/40">Zodiaco Lunar Ancestral</p>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-amber-500/40">BaZi & Zodíaco Imperial</p>
                     </div>
                 </div>
 
                 {/* Main Identity */}
                 <div className="flex flex-col md:flex-row items-center gap-12 py-6">
-                    <div className="relative">
-                        <div className="w-40 h-40 rounded-full bg-rose-900/20 border border-rose-500/20 flex items-center justify-center relative z-10">
-                            <span className="text-7xl drop-shadow-[0_0_20px_rgba(225,29,72,0.4)]">
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleOpenZodiacDetails}
+                        className="relative cursor-pointer group/animal"
+                    >
+                        <div className="w-40 h-40 rounded-full bg-rose-900/20 border border-rose-500/30 flex items-center justify-center relative z-10 overflow-hidden">
+                            <span className="text-7xl drop-shadow-[0_0_20px_rgba(225,29,72,0.4)] transition-transform group-hover/animal:scale-110 duration-500">
                                 {getAnimalEmoji(profile.chinese_animal || '')}
                             </span>
+                            {/* Tap Indicator */}
+                            <div className="absolute inset-0 bg-rose-600/10 opacity-0 group-hover/animal:opacity-100 transition-opacity flex items-center justify-center">
+                                <span className="text-[8px] uppercase tracking-[0.3em] text-white/60 translate-y-12">Profundizar</span>
+                            </div>
                         </div>
                         <div className="absolute inset-0 bg-rose-500/10 blur-[50px] rounded-full animate-pulse" />
-                    </div>
+                    </motion.div>
 
                     <div className="flex-1 text-center md:text-left space-y-4">
                         <div className="space-y-1">
-                            <p className="text-[10px] uppercase tracking-[0.3em] text-white/30">Tu Esencia Lunar</p>
+                            <p className="text-[10px] uppercase tracking-[0.3em] text-white/30">Tu Animal Interno</p>
                             <h3 className="text-4xl md:text-5xl font-serif text-white tracking-wide">
                                 {profile.chinese_animal} <span className="text-amber-500/80">de {profile.chinese_element}</span>
                             </h3>
                         </div>
                         <div className="inline-block px-4 py-1.5 bg-rose-900/30 border border-rose-500/20 rounded-full text-[10px] text-rose-200/80 uppercase tracking-widest">
-                            Año Lunar {profile.chinese_birth_year}
+                            Ciclo Lunar Central
                         </div>
                     </div>
                 </div>
@@ -71,23 +103,45 @@ export const SabiduriaOriental: React.FC<SabiduriaOrientalProps> = ({ profile })
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-10 border-t border-white/5">
                     <div className="space-y-4">
                         <h4 className="text-[10px] uppercase tracking-[0.3em] text-rose-500 font-bold flex items-center gap-2">
-                            <Sparkles className="w-3 h-3" /> Naturaleza
+                            <Sparkles className="w-3 h-3" /> Naturaleza de Elemento
                         </h4>
                         <p className="text-lg text-amber-50/80 italic font-serif leading-relaxed">
                             "{elementDescription}"
                         </p>
                     </div>
                     <div className="space-y-4 bg-white/[0.02] p-6 rounded-2xl border border-white/5">
-                        <h4 className="text-[10px] uppercase tracking-[0.3em] text-amber-500/60 font-bold">Influencia 2025</h4>
+                        <h4 className="text-[10px] uppercase tracking-[0.3em] text-amber-500/60 font-bold">Horizonte 2026</h4>
                         <p className="text-[14px] text-white/50 font-serif leading-relaxed">
-                            Año de la <span className="text-amber-200">Serpiente de Madera</span>. Tiempo de introspección profunda, sabiduría estratégica y crecimiento desde las raíces.
+                            Año del <span className="text-amber-200">Caballo de Fuego (Bing Wu)</span>. {animalData?.forecast_2026_title}. Tiempo de expansión solar y decisiones audaces.
                         </p>
                     </div>
                 </div>
 
-                <p className="text-[10px] uppercase tracking-[0.4em] text-white/10 text-center pt-6 italic">
-                    "El destino es un río que fluye hacia el origen"
-                </p>
+                {/* Open Pergamino Button */}
+                <div className="pt-8 flex flex-col items-center gap-6">
+                    <button
+                        onClick={handleOpenZodiacDetails}
+                        className="group relative px-8 py-3 bg-rose-600/10 border border-rose-600/30 rounded-full text-rose-500 text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-rose-600/20 transition-all flex items-center gap-3 overflow-hidden shadow-[0_0_20px_rgba(225,29,72,0.1)]"
+                    >
+                        <BookOpen className="w-4 h-4" />
+                        Abrir Pergamino Imperial
+                        {!isPremium && <Lock className="w-3 h-3 opacity-50" />}
+                    </button>
+
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-white/10 text-center pt-2 italic">
+                        "El pincel de Lau y la brújula de Yap guían tu camino"
+                    </p>
+                </div>
+
+                {/* Zodiac Detail Modal */}
+                {animalData && (
+                    <ZodiacPergaminoModal
+                        isOpen={showZodiacModal}
+                        onClose={() => setShowZodiacModal(false)}
+                        animal={profile.chinese_animal}
+                        data={animalData}
+                    />
+                )}
             </div>
         </div>
     );

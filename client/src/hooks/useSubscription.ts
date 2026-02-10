@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { endpoints } from '../lib/api';
 
 export interface SubscriptionStatus {
-    plan: 'FREE' | 'PREMIUM';
+    plan: 'FREE' | 'PREMIUM' | 'EXTENDED';
     validUntil?: string;
     features: string[];
 }
@@ -36,5 +36,20 @@ export function useSubscription() {
         }
     };
 
-    return { status, loading, upgrade };
+    const togglePlan = async () => {
+        try {
+            const nextPlan = status?.plan === 'PREMIUM' ? 'FREE' : 'PREMIUM';
+            const res = await fetch(endpoints.upgrade, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan: nextPlan })
+            });
+            const updated = await res.json();
+            setStatus(updated);
+        } catch (err) {
+            console.error("Toggle Plan failed", err);
+        }
+    };
+
+    return { status, loading, upgrade, togglePlan };
 }

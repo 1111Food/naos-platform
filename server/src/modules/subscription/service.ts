@@ -21,4 +21,17 @@ export class SubscriptionService {
         await UserService.updateProfile(userId, { subscription: newStatus });
         return newStatus;
     }
+
+    static async upgradeToExtended(userId: string): Promise<SubscriptionStatus> {
+        const user = await UserService.getProfile(userId);
+
+        const newStatus: SubscriptionStatus = {
+            plan: 'EXTENDED',
+            validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            features: ['unlimited_chat', 'priority_processing', 'professional_tools', 'extended_history']
+        };
+
+        await UserService.updateProfile(userId, { subscription: newStatus });
+        return newStatus;
+    }
 }
