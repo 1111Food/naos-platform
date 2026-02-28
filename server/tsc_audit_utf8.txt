@@ -1,0 +1,1 @@
+﻿src/modules/user/profileConsolidator.ts(17,17): error TS2353: Object literal may only specify known properties, and 'planets' does not exist in type '{ sunSign: string; moonSign: string; risingSign: string; elements: { fire: number; earth: number; air: number; water: number; }; }'.

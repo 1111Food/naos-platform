@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Send } from 'lucide-react';
 import { useTimeBasedMode } from '../hooks/useTimeBasedMode';
+import { useSigil } from '../hooks/useSigil';
+import { useProfile } from '../hooks/useProfile';
 
 interface SigilWidgetProps {
     onNavigate: (view: any) => void;
@@ -9,10 +11,15 @@ interface SigilWidgetProps {
 
 export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMessage }) => {
     const timeMode = useTimeBasedMode();
+    const { profile } = useProfile();
+    const { messages: aiMessages, sendMessage, loading } = useSigil(profile?.nickname || profile?.name);
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState('');
+
+    // Filter messages for the widget (only sigil/guardian role)
+    // We actually use a local state for the widget chat to avoid mixing with main chat
     const [messages, setMessages] = useState<{ role: 'user' | 'sigil', text: string }[]>([
-        { role: 'sigil', text: 'Soy el Sigil, el guardián de este templo digital (Naos). ¿Qué buscas en el tejido del tiempo?' }
+        { role: 'sigil', text: `Acceso concedido, Luis. Como Cáncer que eres, las llaves del Templo están listas. ¿A dónde deseas navegar?` }
     ]);
 
     // Handle External Notifications (e.g., Save Success)
@@ -22,38 +29,47 @@ export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMe
         }
     }, [externalMessage]);
 
-    const handleSend = () => {
-        if (!input.trim()) return;
+    const handleSend = async () => {
+        if (!input.trim() || loading) return;
 
         const cmd = input.toLowerCase();
-        const newMsgs = [...messages, { role: 'user' as const, text: input }];
-        setMessages(newMsgs);
+        const userText = input;
         setInput('');
 
-        // Command processing
-        setTimeout(() => {
-            let response = "No entiendo ese comando.";
+        setMessages(prev => [...prev, { role: 'user', text: userText }]);
 
-            if (cmd.includes('tarot') || cmd.includes('cartas')) {
-                response = "Abriendo el Oráculo...";
-                onNavigate('TAROT');
-            } else if (cmd.includes('carta') || cmd.includes('astral') || cmd.includes('astro')) {
-                response = "Desplegando Carta Astral...";
-                onNavigate('ASTRO');
-            } else if (cmd.includes('neuro') || cmd.includes('numer')) {
-                response = "Calculando vibración...";
-                onNavigate('NUMERO');
-            } else if (cmd.includes('maya') || cmd.includes('nahual')) {
-                response = "Conectando con el Tzolkin...";
-                onNavigate('MAYA');
-            } else if (cmd.includes('inicio') || cmd.includes('home')) {
-                response = "Volviendo al Templo.";
-                onNavigate('TEMPLE');
-            }
+        // Procedural commands for quick navigation (Intuitive S2 Mapping v6.5)
+        if (cmd.includes('tarot') || cmd.includes('cartas')) {
+            onNavigate('TAROT');
+        } else if (cmd.includes('carta') || cmd.includes('astral') || cmd.includes('sol') || cmd.includes('estrellas') || cmd.includes('astros') || cmd.includes('luna')) {
+            onNavigate('ASTRO');
+        } else if (cmd.includes('nahual') || cmd.includes('maya') || cmd.includes('espíritu') || cmd.includes('glifo')) {
+            onNavigate('MAYA');
+        } else if (cmd.includes('numer') || cmd.includes('pinnac') || cmd.includes('vibración') || cmd.includes('metas')) {
+            onNavigate('NUMERO');
+        } else if (cmd.includes('chino') || cmd.includes('oriental') || cmd.includes('buey') || cmd.includes('dragón')) {
+            onNavigate('CHINESE');
+        } else if (cmd.includes(' status')) {
+            setMessages(prev => [...prev, { role: 'sigil', text: 'Conexión cuántica activa. Identidad: Luis (Cáncer). Sincronización 100%.' }]);
+        }
 
-            setMessages(prev => [...prev, { role: 'sigil', text: response }]);
-        }, 500);
+        // Call the AI Guardian (role: 'guardian')
+        try {
+            await sendMessage(userText, 'guardian');
+        } catch (e) {
+            console.error("Guardian Error:", e);
+        }
     };
+
+    // Effect to sync AI messages back to local widget display
+    React.useEffect(() => {
+        if (aiMessages.length > 0) {
+            const lastMsg = aiMessages[aiMessages.length - 1];
+            if (lastMsg.role === 'model') {
+                setMessages(prev => [...prev, { role: 'sigil', text: lastMsg.text }]);
+            }
+        }
+    }, [aiMessages]);
 
     return (
         <div className="fixed top-[120px] right-[20px] z-[60] flex flex-col items-end pointer-events-none">
@@ -73,11 +89,12 @@ export const SigilWidget: React.FC<SigilWidgetProps> = ({ onNavigate, externalMe
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && handleSend()}
-                        className="flex-1 bg-transparent text-sm text-white placeholder-white/30 outline-none"
-                        placeholder="Escribe un comando..."
+                        disabled={loading}
+                        className="flex-1 bg-transparent text-sm text-white placeholder-white/30 outline-none disabled:opacity-50"
+                        placeholder={loading ? 'Sincronizando...' : 'Escribe un comando...'}
                     />
-                    <button onClick={handleSend}>
-                        <Send className="w-4 h-4 text-primary" />
+                    <button onClick={handleSend} disabled={loading}>
+                        <Send className={`w-4 h-4 ${loading ? 'text-white/20' : 'text-primary'}`} />
                     </button>
                 </div>
             </div>

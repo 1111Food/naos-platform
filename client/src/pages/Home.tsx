@@ -1,168 +1,201 @@
+
 import React from 'react';
-import { Sun, Activity, Star, Triangle, MapPin, Scroll } from 'lucide-react';
 import { Player } from '@remotion/player';
 import { TempleAura } from '../remotion/TempleAura';
-import { cn } from '../lib/utils';
-// import { useTimeBasedMode } from '../hooks/useTimeBasedMode';
+import { motion } from 'framer-motion';
 import { useEnergy } from '../hooks/useEnergy';
+import { useCoherence } from '../hooks/useCoherence';
 import { useProfile } from '../hooks/useProfile';
+import { supabase } from '../lib/supabase';
+import { IntentionWidget } from '../components/IntentionWidget';
+import { BentoBlock } from '../components/BentoBlock';
+import { WisdomButton } from '../components/WisdomOverlay';
+import { useWisdom } from '../hooks/useWisdom';
+import { useSound } from '../hooks/useSound';
 
 interface HomeProps {
-    onSelectFeature: (feature: 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'MAYA' | 'ORIENTAL' | 'TRANSITS') => void;
+    onSelectFeature: (feature: any, payload?: any) => void;
     activeFeature?: string;
 }
 
 export const Home: React.FC<HomeProps> = ({ onSelectFeature }) => {
-    // const timeMode = useTimeBasedMode(); // Removed to satisfy tsc
-    const { energy } = useEnergy();
+    const { score, volatility } = useCoherence();
     const { profile } = useProfile();
+    const { energy } = useEnergy();
+    const { openWisdom } = useWisdom();
+    const { playSound } = useSound();
+    // Focused block state removed for Protocol/Lab as they now navigate directly.
 
-    const modules = [
-        {
-            id: 'TRANSITS',
-            label: 'Energía del día',
-            icon: Activity,
-            desc: 'Tus Tránsitos Hoy',
-            color: 'text-amber-200',
-            border: 'border-amber-500/20',
-            bg: 'bg-amber-500/5'
-        },
-        {
-            id: 'ASTRO',
-            label: 'Carta Astral',
-            icon: Star,
-            desc: 'Mapa del Cielo',
-            color: 'text-amber-300',
-            border: 'border-amber-500/30',
-            bg: 'bg-amber-500/5'
-        },
-        {
-            id: 'NUMERO',
-            label: 'Pináculo',
-            icon: Triangle,
-            desc: 'Plan del Alma',
-            color: 'text-purple-300',
-            border: 'border-purple-500/30',
-            bg: 'bg-purple-500/5'
-        },
-        {
-            id: 'MAYA',
-            label: 'Nahual Maya',
-            icon: Sun,
-            desc: 'Energía Sagrada',
-            color: 'text-orange-300',
-            border: 'border-orange-500/30',
-            bg: 'bg-orange-500/5'
-        },
-        {
-            id: 'ORIENTAL',
-            label: 'Sabiduría Oriental',
-            icon: Scroll,
-            desc: 'Ciclo Ancestral',
-            color: 'text-rose-300',
-            border: 'border-rose-500/30',
-            bg: 'bg-rose-500/5'
-        },
-    ];
+    const isBunkerMode = volatility?.system_recommendation === 'TRIGGER_TRIAGE_MODE';
+
+    // Realtime & Fetch Logic
+    React.useEffect(() => {
+        if (!profile?.id) return;
+
+        const fetchIntentions = async () => {
+            try {
+                const startOfDay = new Date();
+                startOfDay.setHours(0, 0, 0, 0);
+                const startOfDayUTC = startOfDay.toISOString();
+
+                await supabase
+                    .from('intentions')
+                    .select('intention_text')
+                    .eq('user_id', profile.id)
+                    .gte('created_at', startOfDayUTC)
+                    .order('created_at', { ascending: false });
+
+                // Intentions logic removed as per activeIntentions removal
+            } catch (error) {
+                console.error("Error fetching intentions:", error);
+            }
+        };
+
+        fetchIntentions();
+
+        const channel = supabase
+            .channel('intentions_updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'intentions',
+                    filter: `user_id=eq.${profile.id}`
+                },
+                (payload) => {
+                    console.log('⚡ Realtime Update:', payload);
+                    fetchIntentions();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [profile?.id]);
+
+    const playerProps = React.useMemo(() => ({ score }), [score]);
+    const playerStyle = React.useMemo(() => ({ width: '100%', height: '100%', objectFit: 'cover' as const, filter: isBunkerMode ? 'hue-rotate(320deg) saturate(0.8)' : 'none' }), [isBunkerMode]);
 
     return (
-        <div className="relative min-h-screen w-full flex flex-col items-center justify-center font-sans text-white selection:bg-amber-500/30">
-            {/* Remotion Aura remains but without the 'box' container */}
+        <div className={`relative min-h-screen w-full flex flex-col items-center justify-start font-sans text-white transition-colors duration-1000 ${isBunkerMode ? 'bg-[#050000]' : 'bg-[#020202]'}`}>
+
+            {/* 1. BACKGROUND ENGINE */}
             <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
                 <Player
                     component={TempleAura}
                     durationInFrames={900}
-                    compositionWidth={1920}
-                    compositionHeight={1080}
-                    fps={60}
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                    }}
-                    autoPlay
-                    loop
-                    controls={false}
+                    compositionWidth={1920} compositionHeight={1080} fps={60}
+                    style={playerStyle}
+                    autoPlay loop controls={false}
+                    inputProps={playerProps}
+                    acknowledgeRemotionLicense
                 />
             </div>
+            {isBunkerMode && <div className="fixed inset-0 z-[1] bg-red-900/5 mix-blend-color-burn pointer-events-none" />}
 
-
-            {/* 1) CONTENEDOR RITUAL CENTRAL (ALTAR) */}
-            <main className="relative z-10 w-full max-w-7xl mx-auto min-h-screen py-24 flex flex-col items-center justify-center">
-
-                {/* The Guardian is now global and persistent */}
-                <div className="h-48 md:h-64" /> {/* Space between Guardian and Watermark/Chip */}
-
-                {/* 4) TEXTO RITUAL (INVOCACIÓN) - MAGNETIC SNAP TO CARDS */}
-                <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-6 duration-1000 delay-300 mb-6 md:mb-8">
-                    <div className={cn(
-                        "px-8 py-3 rounded-full backdrop-blur-xl border transition-all duration-700",
-                        "bg-[#1A103D]/60 border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)]",
-                        "group hover:bg-[#1A103D]/80 hover:border-purple-400/50"
-                    )}>
-                        <p className="text-white/90 font-serif italic text-sm md:text-base tracking-[0.15em] uppercase text-center">
-                            ¿Qué energía deseas explorar hoy?
+            {/* 2. SIGIL LAYER (PERSISTENT NARRATOR) */}
+            <header className="relative z-50 w-full max-w-2xl px-6 pt-12 pb-8 flex flex-col items-center">
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+                    className="w-full text-center cursor-pointer group"
+                    onClick={() => { playSound('click'); onSelectFeature('CHAT'); }}
+                >
+                    <div className="relative p-6 rounded-[2rem] bg-black/40 backdrop-blur-3xl border border-white/5 hover:border-white/10 transition-all">
+                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 bg-amber-500/20 blur-2xl rounded-full" />
+                        <p className="text-lg md:text-xl font-serif italic text-white/90 leading-relaxed transition-colors">
+                            {energy?.guidance ? `"${energy.guidance}"` : "Sincronizando frecuencias natales..."}
                         </p>
+                        <div className="mt-4 flex items-center justify-center gap-3 opacity-20 group-hover:opacity-60 transition-opacity">
+                            <div className="h-[0.5px] w-4 bg-white" />
+                            <span className="text-[8px] uppercase tracking-[0.6em] font-black">Sigil Guardian</span>
+                            <div className="h-[0.5px] w-4 bg-white" />
+                        </div>
+                    </div>
+                </motion.div>
+            </header>
+
+            {/* 3. BENTO GRID (THE PIECES) */}
+            <main className="relative z-10 w-full max-w-6xl mx-auto px-6 pb-24 flex-1 flex flex-col justify-center gap-12">
+
+                {/* 1. SVG CLIP PATHS DEFINITIONS */}
+                <svg width="0" height="0" className="absolute pointer-events-none">
+                    <defs>
+                        <clipPath id="puzzle-astro" clipPathUnits="objectBoundingBox">
+                            <path d="M 0,0 H 0.9 V 0.4 C 0.8,0.4 0.8,0.6 0.9,0.6 V 0.9 H 0.6 C 0.6,1 0.4,1 0.4,0.9 H 0 Z" />
+                        </clipPath>
+                        <clipPath id="puzzle-command" clipPathUnits="objectBoundingBox">
+                            <path d="M 0.1,0 H 1 V 0.9 H 0.6 C 0.6,0.8 0.4,0.8 0.4,0.9 H 0.1 V 0.6 C 0,0.6 0,0.4 0.1,0.4 Z" />
+                        </clipPath>
+                        <clipPath id="puzzle-protocol" clipPathUnits="objectBoundingBox">
+                            <path d="M 0,0.1 H 0.4 C 0.4,0.2 0.6,0.2 0.6,0.1 H 0.9 V 0.4 C 1,0.4 1,0.6 0.9,0.6 V 1 H 0 Z" />
+                        </clipPath>
+                        <clipPath id="puzzle-evolution" clipPathUnits="objectBoundingBox">
+                            <path d="M 0.1,0.1 H 0.4 C 0.4,0 0.6,0 0.6,0.1 H 1 V 1 H 0.1 V 0.6 C 0.2,0.6 0.2,0.4 0.1,0.4 Z" />
+                        </clipPath>
+                    </defs>
+                </svg>
+
+                <div className="flex justify-center mb-8">
+                    <WisdomButton color="cyan" onClick={() => { playSound('click'); openWisdom('IDENTITY'); }} />
+                </div>
+
+                {/* THE OVERLAPPING PUZZLE CONTAINER */}
+                <div className="relative w-full max-w-4xl mx-auto flex flex-col items-center">
+                    <div className="flex w-full -mb-[10%] relative z-20">
+                        <div className="relative z-30 w-1/2 -mr-[5%]">
+                            <BentoBlock
+                                isTopRow={true}
+                                title="CÓDIGO DE IDENTIDAD"
+                                accent="cyan"
+                                clipPath="url(#puzzle-astro)"
+                                pathData="M 0,0 H 0.9 V 0.4 C 0.8,0.4 0.8,0.6 0.9,0.6 V 0.9 H 0.6 C 0.6,1 0.4,1 0.4,0.9 H 0 Z"
+                                onClick={() => { playSound('click'); onSelectFeature('IDENTITY_NEXUS'); }}
+                            />
+                        </div>
+                        <div className="relative z-10 w-1/2 -ml-[5%]">
+                            <BentoBlock
+                                isTopRow={true}
+                                title="ORÁCULO DE ALMAS"
+                                accent="magenta"
+                                clipPath="url(#puzzle-command)"
+                                pathData="M 0.1,0 H 1 V 0.9 H 0.6 C 0.6,0.8 0.4,0.8 0.4,0.9 H 0.1 V 0.6 C 0,0.6 0,0.4 0.1,0.4 Z"
+                                onClick={() => { playSound('click'); onSelectFeature('ORACLE_SOULS'); }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex w-full relative z-10">
+                        <div className="relative z-20 w-1/2 -mr-[5%]">
+                            <BentoBlock
+                                isTopRow={false}
+                                title="PROTOCOLOS Y RANGO"
+                                accent="emerald"
+                                clipPath="url(#puzzle-protocol)"
+                                pathData="M 0,0.1 H 0.4 C 0.4,0.2 0.6,0.2 0.6,0.1 H 0.9 V 0.4 C 1,0.4 1,0.6 0.9,0.6 V 1 H 0 Z"
+                                onClick={() => { playSound('click'); onSelectFeature('PROTOCOL21'); }}
+                            />
+                        </div>
+                        <div className="relative z-10 w-1/2 -ml-[5%]">
+                            <BentoBlock
+                                isTopRow={false}
+                                title="LABORATORIO ELEMENTAL"
+                                accent="orange"
+                                clipPath="url(#puzzle-evolution)"
+                                pathData="M 0.1,0.1 H 0.4 C 0.4,0 0.6,0 0.6,0.1 H 1 V 1 H 0.1 V 0.6 C 0.2,0.6 0.2,0.4 0.1,0.4 Z"
+                                onClick={() => { playSound('click'); onSelectFeature('ELEMENTAL_LAB'); }}
+                            />
+                        </div>
                     </div>
                 </div>
 
-                {/* 5) MÓDULOS COMO ARTEFACTOS (GRID DE 5 PILARES) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full px-6 pb-10 max-w-7xl mx-auto justify-items-center">
-                    {modules.map((item, idx) => (
-                        <button
-                            key={item.id}
-                            onClick={() => onSelectFeature(item.id as any)}
-                            className={cn(
-                                "group relative flex flex-col items-center justify-center p-8 rounded-xl backdrop-blur-md transition-all duration-500 ease-out",
-                                "bg-white/5 border border-white/5 hover:bg-white/10 hover:border-amber-500/30",
-                                "hover:scale-105 hover:shadow-[0_0_30px_rgba(217,119,6,0.1)]",
-                                "animate-in fade-in zoom-in duration-700",
-                                item.bg
-                            )}
-                            style={{ animationDelay: `${idx * 100}ms` }}
-                        >
-                            <div className={cn(
-                                "mb-4 p-3 rounded-full bg-white/5 border border-white/10 transition-colors group-hover:bg-white/10",
-                                item.color
-                            )}>
-                                <item.icon className="w-6 h-6" />
-                            </div>
-                            <span className="text-base font-serif text-white/90 group-hover:text-amber-100 transition-colors">
-                                {item.label}
-                            </span>
-                            <span className="text-[10px] uppercase tracking-widest text-white/30 mt-2 group-hover:text-white/50">
-                                {item.desc}
-                            </span>
-                        </button>
-                    ))}
+                <div className="flex justify-center w-full">
+                    <IntentionWidget />
                 </div>
-
-                {/* Sabiduría Oriental is now part of the grid above */}
-
             </main>
 
-            {/* 7) FOOTER ENERGÉTICO */}
-            <footer className="absolute bottom-0 left-0 right-0 p-8 flex flex-col md:flex-row justify-between items-center z-10 border-t border-white/5">
-                <div className="flex items-center gap-6 text-[10px] uppercase tracking-[0.2em] text-white/30 animate-pulse-slow">
-                    <div className="flex items-center gap-2">
-                        <Activity className="w-3 h-3 text-amber-500/50" />
-                        <span>Tránsito: {energy?.transitScore || '-'}/10</span>
-                    </div>
-                    <div className="w-px h-4 bg-white/10" />
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
-                        <span>Elemento: {energy?.dominantElement || '-'}</span>
-                    </div>
-                </div>
-
-                {profile?.birthCity && (
-                    <div className="mt-4 md:mt-0 flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/20">
-                        <MapPin className="w-3 h-3" />
-                        {profile.birthCity}, {profile.birthCountry}
-                    </div>
-                )}
-            </footer>
-
+            {/* 4. INTERACTIVE FOCUS OVERLAY - MODAL LOGIC REMOVED FOR PROTOCOL/LAB */}
         </div>
     );
 };

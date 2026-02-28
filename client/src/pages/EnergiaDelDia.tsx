@@ -1,48 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Moon, Sun, Wind, Mountain, Sparkles, AlertTriangle } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { AstralLoading } from '../components/AstralLoading';
+import { useProfile } from '../hooks/useProfile';
+import { useEnergy } from '../hooks/useEnergy';
+import { generateDailyInsight } from '../lib/energyUtils';
 
-interface DailyGuidance {
-    personalNumber: number;
-    dayNumber: number;
-    elementOfDay: string;
-    userElement: string;
-    affinity: 'FAVORABLE' | 'NEUTRAL' | 'SENSIBLE';
-    guidance: {
-        favored: string;
-        sensitive: string;
-        advice: string;
-        warning?: string;
-    };
-    status: 'SACRED_VOID' | 'READY';
-}
 
-interface EnergiaDelDiaProps {
-    onOpenRitual?: () => void;
-}
 
-export const EnergiaDelDia: React.FC<EnergiaDelDiaProps> = ({ onOpenRitual }) => {
-    const [data, setData] = useState<DailyGuidance | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetch('/api/astrology/daily')
-            .then(res => {
-                if (!res.ok) throw new Error('Portal desconectado');
-                return res.json();
-            })
-            .then(d => {
-                setData(d);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error("Daily Ritual Error:", err);
-                setData({ status: 'SACRED_VOID' } as any);
-                setLoading(false);
-            });
-    }, []);
+export const EnergiaDelDia: React.FC = () => {
 
     const ElementIcon = ({ element, className }: { element: string, className?: string }) => {
         switch (element) {
@@ -54,44 +20,52 @@ export const EnergiaDelDia: React.FC<EnergiaDelDiaProps> = ({ onOpenRitual }) =>
         }
     };
 
-    if (loading) {
-        return <AstralLoading />;
-    }
+    // --- LOGIC: GENERATE INSIGHT ---
+    const { profile } = useProfile();
+    const { energy } = useEnergy();
 
-    if (!data || data.status === 'SACRED_VOID') {
-        return (
-            <div className="w-full max-w-[1200px] mx-auto space-y-12 py-12 px-4 sm:px-6 lg:px-8 text-center">
-                <header className="space-y-6 relative py-12">
-                    <h1 className="text-[32px] sm:text-[48px] font-light tracking-[0.2em] text-amber-50/90 font-serif lowercase italic">
-                        Energía del Día
-                    </h1>
-                </header>
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="max-w-2xl mx-auto p-12 rounded-[3rem] bg-black/40 border border-red-500/10 text-center space-y-8"
-                >
-                    <div className="w-20 h-20 rounded-full border border-red-500/20 flex items-center justify-center mx-auto bg-red-500/5">
-                        <Sparkles className="w-8 h-8 text-red-500/40" />
-                    </div>
-                    <div className="space-y-4">
-                        <h2 className="text-[26px] font-light tracking-widest text-amber-50/80 uppercase">Vacío Sagrado</h2>
-                        <p className="text-[17px] text-amber-100/40 font-serif italic leading-relaxed">
-                            "El Templo aguarda tus coordenadas. Inicia tu Ritual de Nacimiento para que las estrellas puedan reconocerte."
-                        </p>
-                    </div>
-                    <button
-                        onClick={onOpenRitual}
-                        className="px-12 py-4 rounded-full bg-red-500/10 border border-red-500/20 text-red-100 hover:bg-red-500/20 transition-all uppercase tracking-[0.3em] text-[11px]"
-                    >
-                        Manifestar Origen
-                    </button>
-                </motion.div>
-            </div>
-        );
-    }
+    // 1. Calculate Universal Day
+    const now = new Date();
+    const day = now.getDate();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    const sumDate = day + month + year;
+    const reduce = (n: number): number => {
+        if (n === 11 || n === 22 || n === 33) return n;
+        if (n < 10) return n;
+        return reduce(n.toString().split('').reduce((a, b) => a + parseInt(b), 0));
+    };
+    const universalDayNumber = reduce(sumDate);
 
-    const { guidance, personalNumber, dayNumber, elementOfDay, userElement } = data;
+    // 2. Get User Vars
+    // Personal Number B (Day of birth reduced)
+    const birthDay = profile?.birthDate ? parseInt(profile.birthDate.split('-')[2]) : 1;
+    const personalNumberB = reduce(birthDay);
+
+    // Zodiac Sign
+    const zodiacSign = profile?.astrology?.sunSign || 'Unknown';
+
+    // 3. Generate Insight
+    const insight = React.useMemo(() => {
+        return generateDailyInsight(zodiacSign, personalNumberB, universalDayNumber);
+    }, [zodiacSign, personalNumberB, universalDayNumber]);
+
+    // Data prep for view
+    const viewData = {
+        personalNumber: personalNumberB,
+        dayNumber: universalDayNumber,
+        elementOfDay: energy?.dominantElement || 'Eter',
+        userElement: 'Tu Elemento', // Todo: map sign to element
+        guidance: {
+            favored: insight.advice, // Using main advice for now
+            sensitive: "Sintoniza con tu intuición...",
+            advice: insight.advice,
+            warning: undefined
+        }
+    };
+
+    // --- RENDER ---
+    const { guidance, personalNumber, dayNumber, elementOfDay, userElement } = viewData;
 
     return (
         <div className="w-full max-w-[1200px] mx-auto space-y-12 py-8 px-4 sm:px-6 lg:px-8 overflow-x-hidden">

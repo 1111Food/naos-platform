@@ -10,6 +10,7 @@ interface TempleDashboardProps {
 
 export const TempleDashboard: React.FC<TempleDashboardProps> = ({ onSelectFeature, activeFeature }) => {
     const timeMode = useTimeBasedMode();
+
     const buttons = [
         { id: 'TAROT', label: 'Tarot Sí o No', icon: Flower2, color: 'text-rose-400', bg: 'bg-rose-400/10' },
         { id: 'MAYA', label: 'Nawal Maya', icon: Sun, color: 'text-orange-400', bg: 'bg-orange-400/10' },
@@ -51,11 +52,24 @@ export const TempleDashboard: React.FC<TempleDashboardProps> = ({ onSelectFeatur
                             </div>
                         )}
                     </div>
-                    <div className={cn(
-                        "absolute -bottom-4 left-1/2 -translate-x-1/2 px-4 py-1 border rounded-full text-[10px] uppercase tracking-widest backdrop-blur-md transition-colors duration-1000",
-                        timeMode === 'DAY' ? "bg-amber-500/20 border-amber-500/30 text-amber-500" : "bg-primary/20 border-primary/30 text-primary"
-                    )}>
-                        {timeMode === 'DAY' ? "Sigil: Anthropos Solar" : "Sigil: Guardián Nocturno"}
+
+                    {/* LABEL & ENERGY BOOST INDICATOR */}
+                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 w-full">
+                        <div className={cn(
+                            "px-4 py-1 border rounded-full text-[10px] uppercase tracking-widest backdrop-blur-md transition-colors duration-1000",
+                            timeMode === 'DAY' ? "bg-amber-500/20 border-amber-500/30 text-amber-500" : "bg-primary/20 border-primary/30 text-primary"
+                        )}>
+                            {timeMode === 'DAY' ? "Sigil: Anthropos Solar" : "Sigil: Guardián Nocturno"}
+                        </div>
+
+                        {/* REGULATION BOOST INDICATOR - INJECTED VIA PROP OR CONTEXT IN FUTURE, MOCKUP LOGIC HERE IF NEEDED OR JUST PLACEHOLDER */}
+                        {/* Note: Ideally pass regulationBoost as prop here, but for now we keep it visual or use context if available inside component. */}
+                        {/* Since TempleDashboard doesn't have useEnergy yet, we'll need to inject it or fetch it. 
+                             Wait, request was "ACTUALIZACIÓN VISUAL (ENERGY CARD)". TempleDashboard has buttons but maybe not the energy score itself explicitly displayed?
+                             Ah, the prompt says "En la tarjeta de Energía del Dashboard". There isn't an explicit "Energy Card" in the code I read (only features). 
+                             I see the SIGIL container. I will add it BELOW the title. 
+                             Propagating useEnergy here might be needed. I'll add the hook call here.
+                         */}
                     </div>
                 </div>
                 <p className="mt-10 text-center text-white/60 font-serif italic text-lg max-w-md">

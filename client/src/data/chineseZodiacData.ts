@@ -55,7 +55,7 @@ export const CHINESE_ZODIAC_WISDOM: Record<string, ChineseZodiacWisdom> = {
         forecast_wealth: "Estabilidad discreta. Evita préstamos o garantías a terceros. Tu riqueza este año reside en la gestión inteligente de lo que ya tienes.",
         compatibility: "Mejor con: Cabra, Cerdo, Perro. / Evitar: Gallo."
     },
-    "Dragon": {
+    "Dragón": {
         title: "El Guardián de la Perla / El Emperador",
         element_fixed: "Tierra (Yang)",
         totem_essence: "Naciste bajo el signo de la suerte y el poder. El Dragón no sigue caminos, los crea. Eres magnánimo, lleno de vitalidad y con un ego saludable que, si no se controla, puede volverse tiranía. Tu presencia es un faro de inspiración para los demás.",

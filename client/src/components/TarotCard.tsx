@@ -69,7 +69,14 @@ export const TarotCard: React.FC<TarotCardProps> = ({
             <div className="relative z-10 flex-1 flex items-center justify-center">
                 <div className="relative w-32 h-32 flex items-center justify-center">
                     {/* Symbol with Sacred Glow */}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="w-24 h-24 text-amber-50 drop-shadow-[0_0_15px_rgba(255,248,231,0.6)]">
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.2"
+                        className="w-24 h-24 text-amber-50"
+                        style={{ filter: 'drop-shadow(0 0 5px #00ffff) brightness(1.5) contrast(1.2)' }}
+                    >
                         {RitualGlyphs[index] || <circle cx="12" cy="12" r="10" />}
                     </svg>
                     {/* Energy Latido (Heartbeat) */}
@@ -99,16 +106,58 @@ export const TarotCard: React.FC<TarotCardProps> = ({
         </div>
     );
 
+    // STITCH: Holographic Tilt Logic
+    const [rotateX, setRotateX] = React.useState(0);
+    const [rotateY, setRotateY] = React.useState(0);
+    const [brightness, setBrightness] = React.useState(1);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (isRevealed) return; // Only tilt back
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left; // x position within the element.
+        const y = e.clientY - rect.top;  // y position within the element.
+
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        const rotateXValue = ((y - centerY) / centerY) * -15; // Max 15deg tilt
+        const rotateYValue = ((x - centerX) / centerX) * 15;
+
+        setRotateX(rotateXValue);
+        setRotateY(rotateYValue);
+        setBrightness(1 + ((Math.abs(rotateXValue) + Math.abs(rotateYValue)) / 30));
+    };
+
+    const handleMouseLeave = () => {
+        setRotateX(0);
+        setRotateY(0);
+        setBrightness(1);
+    };
+
     const CardBack = () => (
-        <div className={cn(
-            "absolute inset-0 bg-[#0c0c0e] rounded-xl border border-red-500/20 shadow-[0_0_25px_rgba(239,68,68,0.15)] overflow-hidden flex items-center justify-center transition-all duration-700",
-            isSelected && "border-red-500/50 bg-[#161618] shadow-[0_0_35px_rgba(239,68,68,0.4)]"
-        )}>
+        <div
+            className={cn(
+                "absolute inset-0 bg-[#0c0c0e] rounded-xl border border-red-500/20 shadow-[0_0_25px_rgba(239,68,68,0.15)] overflow-hidden flex items-center justify-center transition-all duration-300",
+                isSelected && "border-red-500/50 bg-[#161618] shadow-[0_0_35px_rgba(239,68,68,0.4)]"
+            )}
+            style={{
+                filter: `brightness(${brightness})`
+            }}
+        >
             {/* Sacred Geometry Texture */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/sacred-geometry.png')]" />
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/sacred-geometry.png')]" />
+
+            {/* STITCH: Holographic Overlay (Dynamic Gradient) */}
+            <div
+                className="absolute inset-0 opacity-40 pointer-events-none mix-blend-overlay transition-opacity duration-300"
+                style={{
+                    background: `linear-gradient(${135 + rotateY * 2}deg, rgba(255,255,255,0) 30%, rgba(6,182,212,0.3) 50%, rgba(251,191,36,0.2) 70%, rgba(255,255,255,0) 100%)`,
+                    transform: `translateX(${rotateY}px)`
+                }}
+            />
 
             {/* Energy Latido (Nucleus) */}
-            <div className="relative">
+            <div className="relative z-10">
                 <motion.div
                     animate={{
                         scale: [1, 1.4, 1],
@@ -119,17 +168,17 @@ export const TarotCard: React.FC<TarotCardProps> = ({
                         repeat: Infinity,
                         ease: "easeInOut"
                     }}
-                    className="w-8 h-8 rounded-full border border-amber-500/20 flex items-center justify-center bg-amber-500/5"
+                    className="w-10 h-10 rounded-full border border-amber-500/30 flex items-center justify-center bg-amber-500/5 backdrop-blur-sm"
                 >
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-100 shadow-[0_0_10px_rgba(255,248,231,0.8)]" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-200 shadow-[0_0_15px_rgba(255,248,231,1)]" />
                 </motion.div>
-                <div className="absolute inset-0 bg-amber-500/5 blur-xl rounded-full" />
+                <div className="absolute inset-0 bg-amber-500/10 blur-xl rounded-full" />
             </div>
 
             {isSelected && (
                 <motion.div
                     layoutId="selection-glow"
-                    className="absolute inset-0 border-2 border-amber-500/20 rounded-xl animate-pulse"
+                    className="absolute inset-0 border-2 border-amber-500/40 rounded-xl animate-pulse"
                 />
             )}
         </div>
@@ -138,17 +187,29 @@ export const TarotCard: React.FC<TarotCardProps> = ({
     return (
         <motion.div
             onClick={onClick}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
             className={cn("relative w-full h-full cursor-pointer preserve-3d perspective-1000", className)}
             initial={isRevealed ? { opacity: 0, scale: 0.95 } : undefined}
-            animate={isRevealed ? { opacity: 1, scale: 1, rotateY: 0 } : { opacity: 1, scale: 1, rotateY: 180 }}
-            whileHover={{ y: -4 }}
+            animate={{
+                opacity: 1,
+                scale: 1,
+                rotateY: isRevealed ? 0 : 180,
+                rotateX: isRevealed ? 0 : rotateX / 2 // Slight tilt even when revealed? No, only back.
+            }}
+            whileHover={{ y: isRevealed ? -4 : 0, scale: 1.02 }}
             transition={{ duration: 0.8, ease: "circOut" }}
+            style={{
+                transformStyle: "preserve-3d",
+                transform: isRevealed ? `rotateY(0deg)` : `rotateY(180deg) rotateX(${rotateX}deg) rotateZ(${rotateY / 2}deg)`
+            }}
         >
-            <div className={cn("w-full h-full relative transform-style-3d transition-transform duration-700", isRevealed ? "" : "rotate-y-180")}>
-                <div className="absolute inset-0 backface-hidden">
+            <div className={cn("w-full h-full relative transform-style-3d transition-transform duration-700", isRevealed ? "" : "")}>
+                {/* Front is separate from rotation logic in parent motion.div essentially, but we need strictly separate faces */}
+                <div className="absolute inset-0 backface-hidden" style={{ transform: "rotateY(0deg)" }}>
                     <CardFront />
                 </div>
-                <div className="absolute inset-0 backface-hidden rotate-y-180">
+                <div className="absolute inset-0 backface-hidden" style={{ transform: "rotateY(180deg)" }}>
                     <CardBack />
                 </div>
             </div>

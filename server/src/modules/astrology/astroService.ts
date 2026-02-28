@@ -50,7 +50,43 @@ export class AstrologyService {
             // El motor usa year/month/day/hour del objeto Date en su contexto UTC interno si se usa Astronomy.MakeTime(date)
             const natalChart = AstrologyEngine.calculateNatalChart(dateObj, lat, lng);
 
-            return natalChart;
+            // 4. Adapt to AstrologyProfile Interface (Fix v9.13)
+            const sun = natalChart.planets.find(p => p.name === 'Sun');
+            const moon = natalChart.planets.find(p => p.name === 'Moon');
+
+            // Rising is based on Ascendant
+            // We need to construct a CelestialBody for Rising based on the Ascendant degree
+            // NatalChart.ascendant is absolute degree (0-360)
+            const ascDeg = natalChart.ascendant;
+            const ascSignIndex = Math.floor(ascDeg / 30);
+            const ZODIAC = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+            const ascSign = ZODIAC[ascSignIndex];
+            const ascRelDeg = ascDeg % 30;
+
+            const rising: any = {
+                name: 'Rising',
+                sign: ascSign,
+                degree: ascRelDeg,
+                absDegree: ascDeg,
+                house: 1,
+                isRetrograde: false
+            };
+
+            const profile: any = {
+                sun: sun,
+                moon: moon,
+                rising: rising,
+                planets: natalChart.planets,
+                houses: natalChart.houses.map(h => h.absDegree), // Map to number[] as expected by interface
+                houseSystem: 'Equal',
+                elements: natalChart.elements,
+                // Legacy support
+                sunSign: sun?.sign || '',
+                moonSign: moon?.sign || '',
+                risingSign: rising.sign || ''
+            };
+
+            return profile;
 
         } catch (error) {
             console.error("🔥 AstroService Critical Failure:", error);
@@ -59,8 +95,8 @@ export class AstrologyService {
     }
 
     /**
-     * Genera una interpretación profunda basada en Gramática Generativa.
-     * Une: [Arquetipo Planeta] + [Estilo Signo] + [Escenario Casa]
+     * Genera una interpretación profunda basada en la metáfora del "Teatro de la Vida".
+     * Une: [Actor] + [Estilo/Vestuario] + [Escenario]
      */
     static getSmartInterpretation(planet: string, sign: string, house: number, isRetrograde: boolean) {
         // 1. Recuperar datos con seguridad
@@ -68,22 +104,25 @@ export class AstrologyService {
         const s = SIGNS_LIB[sign] || SIGNS_LIB['Aries'];
         const h = HOUSES_LIB[house] || HOUSES_LIB[1];
 
-        // 2. CONSTRUCCIÓN DE LA NARRATIVA (Los 3 Bloques)
+        // 2. CONSTRUCCIÓN DE LA NARRATIVA (Teatro de la Vida)
 
-        // BLOQUE 1: LA ESENCIA
-        const block1 = `Tu ${p.archetype} se expresa a través del filtro de ${s.name}. ${p.essence_paragraph} En este signo, la energía funciona ${s.style_paragraph}.`;
+        // BLOQUE 1: LA FÓRMULA DE SÍNTESIS
+        const block1 = `LA ESCENA: El ${p.archetype} (${p.name}) actuando con el estilo de ${s.name} en ${h.scenario}.`;
 
-        // BLOQUE 2: EL ESCENARIO
-        const block2 = `Esta configuración se manifiesta principalmente en la ${h.name}, el escenario de ${h.arena}. ${h.arena_paragraph} Aquí es donde tu alma busca brillar, aplicando la estrategia de ${s.strategy} para conquistar los asuntos de ${h.manifestation}.`;
+        // BLOQUE 2: TRADUCCIÓN HUMANISTA
+        const block2 = `Tu misión con esta configuración es ${p.mission} En este escenario, actúas ${s.style} enfrentando el reto de: ${h.challenge}.`;
 
-        // BLOQUE 3: EL RETO EVOLUTIVO
-        const block3 = `El desafío evolutivo radica en evitar la sombra de ${s.name}, que tiende a ${s.shadow_paragraph}. Tu maestría consiste en elevar esta vibración en el ámbito de ${h.evolution_paragraph}, integrando la energía conscientemente.`;
+        // BLOQUE 3: LUZ, SOMBRA Y EVOLUCIÓN
+        const block3 = `EN LUZ: ${p.potential} (Don de ${s.name}: ${s.gift}).\nEN SOMBRA: ${p.shadow} (Trampa de ${s.name}: ${s.trap}).\nRETO: ${h.challenge}`;
+
+        // BLOQUE 4: LA PREGUNTA DEL ALMA
+        const block4 = `REFLEXIÓN: ${p.question} (Mantra: "${s.mantra}")`;
 
         // 3. Empaquetar
         return {
-            title: `${p.name} en ${s.name}`,
+            title: `${p.name} en ${s.name} (${h.title})`,
             archetype: p.archetype,
-            blocks: [block1, block2, block3],
+            blocks: [block1, block2, block3, block4],
             isRetrograde
         };
     }
@@ -92,5 +131,20 @@ export class AstrologyService {
     static getAstralReading(planet: string, sign: string, house: number, isRetrograde: boolean): string {
         const data = this.getSmartInterpretation(planet, sign, house, isRetrograde);
         return data.blocks.join('\n\n');
+    }
+
+    /**
+     * Determines the general "Mood" of the cosmos for Coherence Engine.
+     * Deterministic based on date to avoid random fluctuations.
+     */
+    static getDailyMood(date: Date = new Date()): 'HARMONIOUS' | 'CHALLENGING' | 'NEUTRAL' {
+        // Simple deterministic logic:
+        // Day of month % 3 => 0: Neutral, 1: Harmonious, 2: Challenging
+        const day = date.getDate();
+        const moodIndex = day % 3;
+
+        if (moodIndex === 1) return 'HARMONIOUS';
+        if (moodIndex === 2) return 'CHALLENGING';
+        return 'NEUTRAL';
     }
 }

@@ -13,8 +13,13 @@ async function testNormalization() {
         console.warn("❌ FALLO: No se usó la base de datos estática.");
     }
 
-    // Caso 2: Ciudad no existente (debería ir a API)
-    console.log("\n--- Prueba: Ciudad desconocida (debería ir a API/Fallback) ---");
+    // Caso 2: Ciudad existente NO normalizada (API Hit)
+    console.log("\n--- Prueba: Bogota, Colombia (API Real) ---");
+    const coordsReal = await GeocodingService.getCoordinates("Bogota", "", "Colombia");
+    console.log("Resultado:", coordsReal);
+
+    // Caso 3: Ciudad no existente (Fallback)
+    console.log("\n--- Prueba: Ciudad desconocida (Fallback) ---");
     const coords2 = await GeocodingService.getCoordinates("X-Cosmos-City", "Mars", "Ether");
     console.log("Resultado:", coords2);
 }

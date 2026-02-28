@@ -2,8 +2,8 @@ import { config } from './src/config/env';
 
 async function testDirect() {
     const API_KEY = config.GOOGLE_API_KEY;
-    // We try gemini-1.5-flash which is standard
-    const model = "gemini-1.5-flash";
+    // We try gemini-2.0-flash which is standard
+    const model = "gemini-2.0-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
 
     const body = {

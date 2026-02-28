@@ -6,7 +6,7 @@ import { useGuardianState } from '../contexts/GuardianContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface GuardianProps {
-    view: 'LANDING' | 'ONBOARDING' | 'TEMPLE' | 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'SYNASTRY' | 'MAYA' | 'TRANSITS' | 'ORIENTAL';
+    view: 'LANDING' | 'ONBOARDING' | 'TEMPLE' | 'ASTRO' | 'NUMERO' | 'TAROT' | 'FENGSHUI' | 'CHAT' | 'SYNASTRY' | 'MAYA' | 'TRANSITS' | 'ORIENTAL' | 'MANUALS' | 'INTENTION' | 'LOGIN' | 'SANCTUARY' | 'WELCOME_BACK' | 'ENERGY_CODE' | 'ORACLE_SOULS' | 'PROTOCOL' | 'PROTOCOL21' | 'ELEMENTAL_LAB' | 'RANKING' | 'PROFILE' | 'EVOLUTION' | 'IDENTITY_NEXUS' | 'DECISION_ENGINE' | 'MISSION_YEAR';
     onOpenChat?: () => void;
 }
 
@@ -22,10 +22,10 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
     }, []);
 
     // Determine Visibility, Scale and Position based on view
-    const isHidden = view === 'LANDING' || view === 'ONBOARDING';
-    const isResting = view === 'TEMPLE';
+    const isHidden = view === 'LANDING' || view === 'ONBOARDING' || view === 'LOGIN' || (view as any) === 'WELCOME_BACK';
+    const isResting = view === 'TEMPLE' || view === 'IDENTITY_NEXUS';
     const isChatting = view === 'CHAT';
-    const isManifesting = ['ASTRO', 'NUMERO', 'TAROT', 'FENGSHUI', 'SYNASTRY', 'MAYA', 'TRANSITS', 'ORIENTAL'].includes(view);
+    const isManifesting = ['ASTRO', 'NUMERO', 'TAROT', 'FENGSHUI', 'SYNASTRY', 'MAYA', 'TRANSITS', 'ORIENTAL', 'INTENTION'].includes(view);
 
     // Interaction states
     const isListening = state === 'LISTENING';
@@ -55,8 +55,9 @@ export const Guardian: React.FC<GuardianProps> = ({ view, onOpenChat }) => {
                         x: isManifesting ? 0 : "-50%",
                         y: 0,
                         rotate: isManifesting ? 12 : 0,
-                        width: isManifesting ? 80 : (isResting ? (window.innerWidth < 768 ? 192 : 288) : (window.innerWidth < 768 ? 128 : 160)),
-                        height: isManifesting ? 80 : (isResting ? (window.innerWidth < 768 ? 192 : 288) : (window.innerWidth < 768 ? 128 : 160))
+                        // STITCH UPDATE: Reduced size by ~30% for subtle guidance
+                        width: isManifesting ? 64 : (isResting ? (window.innerWidth < 768 ? 110 : 170) : (window.innerWidth < 768 ? 90 : 120)),
+                        height: isManifesting ? 64 : (isResting ? (window.innerWidth < 768 ? 110 : 170) : (window.innerWidth < 768 ? 90 : 120))
                     }}
                     style={{}}
                     onClick={(e) => {

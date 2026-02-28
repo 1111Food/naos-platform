@@ -12,7 +12,7 @@ export class ChineseAstrology {
     ];
 
     private static readonly ELEMENTS = [
-        "Madera", "Fuego", "Tierra", "Metal", "Agua"
+        "Metal", "Agua", "Madera", "Fuego", "Tierra"
     ];
 
     // Brief interpretations based on Animal + Element
@@ -29,25 +29,32 @@ export class ChineseAstrology {
      * Note: Traditional Chinese New Year starts between Jan 21 and Feb 20.
      * For simplified NAOS logic, we use a fixed approximation (Feb 4 - Lichun) to avoid external APIs.
      */
+    /**
+     * Calculates the Chinese Zodiac sign based on birth date (Hard Fix V3.0)
+     */
     static calculate(birthDateISO: string): ChineseAstrologyResult {
         const date = new Date(birthDateISO);
         let year = date.getUTCFullYear();
         const month = date.getUTCMonth() + 1;
         const day = date.getUTCDate();
 
-        // Lichun (Start of Solar Spring) usually falls on Feb 4.
-        // If birth is before Feb 4, use previous Chinese year.
+        // Lichun adjustment (Feb 4)
         if (month < 2 || (month === 2 && day < 4)) {
             year--;
         }
 
-        // Cycle starts from 1900 (Metal Rat)
-        // Offset 1900 is Rata (0), Metal (3)
         const animalIdx = (year - 1900) % 12;
-        const elementIdx = Math.floor(((year - 1900) % 10) / 2);
-
         const animal = this.ANIMALS[animalIdx];
-        const element = this.ELEMENTS[elementIdx];
+
+        // FIXED ELEMENT LOGIC (User Request)
+        // 0-1: Metal, 2-3: Agua, 4-5: Madera, 6-7: Fuego, 8-9: Tierra
+        const lastDigit = year % 10;
+        let element = 'Tierra'; // Default
+
+        if (lastDigit === 0 || lastDigit === 1) element = 'Metal';
+        else if (lastDigit === 2 || lastDigit === 3) element = 'Agua';
+        else if (lastDigit === 4 || lastDigit === 5) element = 'Madera';
+        else if (lastDigit === 6 || lastDigit === 7) element = 'Fuego';
 
         return {
             animal,

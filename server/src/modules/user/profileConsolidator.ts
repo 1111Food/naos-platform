@@ -6,14 +6,15 @@ export class ProfileConsolidator {
      * This is a pure data transformation, no interpretations added here.
      */
     static consolidate(profile: UserProfile): UserEnergeticProfile {
-        console.log(`📜 Consolidating Energetic Bible for: ${profile.name}`);
+        console.log(`📜 Consolidating Dynamic Energetic Bible for: ${profile.name || 'Unknown'}`);
 
         return {
             western: {
-                sunSign: profile.astrology?.sunSign || 'Unknown',
-                moonSign: profile.astrology?.moonSign || 'Unknown',
-                risingSign: profile.astrology?.risingSign || 'Unknown',
-                elements: profile.astrology?.elements || { fire: 0, earth: 0, air: 0, water: 0 }
+                sunSign: profile.astrology?.sun?.sign || profile.astrology?.sunSign || 'Unknown',
+                moonSign: profile.astrology?.moon?.sign || profile.astrology?.moonSign || 'Unknown',
+                risingSign: profile.astrology?.rising?.sign || profile.astrology?.risingSign || 'Unknown',
+                elements: profile.astrology?.elements || { fire: 0, earth: 0, air: 0, water: 0 },
+                planets: profile.astrology?.planets || [] // FULL PLANETARY ACCESS: Mars, Venus, etc.
             },
             chinese: {
                 animal: profile.chinese_animal || 'Unknown',

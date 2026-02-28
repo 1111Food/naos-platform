@@ -1,0 +1,42 @@
+﻿­ƒÜÇ Validando Normalizaci├│n Geogr├ífica...
+
+--- Prueba: Guatemala City ---
+­ƒÄ» Geocoding NORMALIZED Hit: guatemala city, guatemala
+Resultado: { lat: 14.6349, lng: -90.5069 }
+Ô£à ├ëXITO: Se usaron las coordenadas normalizadas.
+
+--- Prueba: Bogota, Colombia (API Real) ---
+­ƒîÉ Geocoding API Request: bogota, colombia...
+­ƒöÆ Geocoding LOCK Applied: bogota, , colombia -> 4.653382, -74.083633
+Resultado: { lat: 4.653382, lng: -74.083633 }
+
+--- Prueba: Ciudad desconocida (Fallback) ---
+­ƒîÉ Geocoding API Request: x-cosmos-city, ether...
+node.exe : ÔÜá´©Å 
+Geocoding failed for 
+x-cosmos-city, mars, 
+ether, using frozen 
+fallback.
+En línea: 1 
+Carácter: 1
++ & "C:\Program 
+Files/node.exe" 
+"C:\Program Files/nod
+e_modules/npm/bin/ 
+...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (ÔÜá´©Å    
+ Geocodin...rozen    
+ fallback.:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+Resultado: { lat: 14.6349, lng: -90.5069 }

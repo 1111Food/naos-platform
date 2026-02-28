@@ -12,8 +12,10 @@ const cache: GeoCache = {
 
 export class GeocodingService {
     static async getCoordinates(city: string, state: string, country: string): Promise<{ lat: number, lng: number }> {
-        const query = `${city}, ${country}`.toLowerCase().trim();
-        const fullQuery = `${city}, ${state}, ${country}`.toLowerCase().trim();
+        const query = [city, country].filter(p => p && p.trim().length > 0).join(', ').toLowerCase().trim();
+
+        const queryParts = [city, state, country].filter(p => p && p.trim().length > 0);
+        const fullQuery = queryParts.join(', ').toLowerCase().trim();
 
         // 1. Check Static Normalized DB first
         if (NORMALIZED_CITIES[query]) {

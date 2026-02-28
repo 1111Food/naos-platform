@@ -3,6 +3,24 @@ export interface PositionInterpretation {
     blocks: string[];
 }
 
+export const PINNACLE_POSITIONS: Record<string, { title: string, context: string }> = {
+    A: { title: "Karma (Mes)", context: "esta posición marca tu tarea pendiente y la acción que vienes a equilibrar. Como Karma, esta frecuencia te indica el 'cómo' debes actuar en el mundo para sanar tu linaje." },
+    B: { title: "Personalidad (Día)", context: "esta es tu máscara social y la primera impresión que dejas. Como Personalidad, esta vibración tiñe la forma en que el mundo te percibe inicialmente." },
+    C: { title: "Vidas Pasadas (Año)", context: "representa la sabiduría dormida y los talentos que traes de encarnaciones previas. Aquí, el número actúa como una herramienta que ya dominas." },
+    D: { title: "Esencia", context: "es tu núcleo divino, quien eres cuando estás a solas. Como Esencia, esta frecuencia define tu verdadera naturaleza sin máscaras." },
+    E: { title: "Regalo Divino", context: "es un talento especial concedido para apoyarte. Esta vibración actúa como un 'comodín' positivo que se activa cuando confías en la vida." },
+    F: { title: "Destino", context: "marca el norte inevitable de tu alma. Como Destino, esta frecuencia te empuja hacia el propósito por el cual encarnaste." },
+    G: { title: "Misión de Vida", context: "es tu propósito central. Aquí la vibración se convierte en el 'para qué' estás aquí y la contribución que vienes a entregar." },
+    H: { title: "Realización", context: "representa el logro máximo de tu espíritu. Como Realización, esta frecuencia es la cima de tu montaña personal y tu plenitud." },
+    I: { title: "Subconsciente", context: "revela los deseos ocultos y motores internos. Esta vibración te mueve desde las sombras de tu psique." },
+    J: { title: "Inconsciente", context: "son tus reacciones automáticas ante el estrés. Esta frecuencia es tu memoria más antigua actuando en piloto automático." },
+    P: { title: "Sombra Inmediata", context: "es tu primer gran bloqueo. Aquí, la vibración actúa como el obstáculo que parece detenerte apenas intentas avanzar." },
+    O: { title: "Inconsciente Negativo", context: "son patrones repetitivos heredados. Esta frecuencia señala el nudo emocional que debes desatar de tu historia personal." },
+    Q: { title: "Ser Inferior Heredado", context: "son cargas ancestrales de tu linaje. Esta vibración es el peso del pasado familiar que vienes a transmutar." },
+    R: { title: "Ser Inferior Consciente", context: "son los defectos que ya conoces de ti mismo. Aquí, la vibración te muestra el espejo de lo que te cuesta trabajo transformar." },
+    S: { title: "Ser Inferior Latente", context: "es el desafío final, el 'enemigo oculto'. Esta frecuencia solo se revela cuando has dominado los niveles anteriores." }
+};
+
 export const PINNACLE_INTERPRETATIONS: Record<number, PositionInterpretation> = {
     1: {
         archetype: "El Iniciador / El Mago",

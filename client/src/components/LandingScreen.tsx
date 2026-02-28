@@ -1,3 +1,4 @@
+import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useTimeBasedMode } from '../hooks/useTimeBasedMode';
 import { StatusBadge } from './StatusBadge';

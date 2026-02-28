@@ -7,6 +7,7 @@ export interface SubscriptionStatus {
 export interface UserProfile {
     id: string;
     name: string;
+    nickname?: string;
     email?: string;
     birthDate: string; // ISO Date
     birthTime: string; // HH:mm
@@ -23,6 +24,7 @@ export interface UserProfile {
     plan_type: 'free' | 'premium' | 'premium_plus';
     usage_level: 'normal' | 'frequent' | 'intensive';
     daily_interactions: number;
+    guardian_notes?: string;
     astrology?: AstrologyProfile;
     numerology?: NumerologyProfile;
     fengShui?: FengShuiProfile;
@@ -34,6 +36,10 @@ export interface UserProfile {
     chinese_element?: string;
     chinese_birth_year?: number;
     sigil_url?: string;
+    active_anchor?: string | null;
+    anchor_expires_at?: string | null; // ISO Date
+    last_meditation?: { type: string; date: string } | null;
+    dominant_intent?: 'fitness' | 'consciousness' | 'productivity' | 'creativity' | 'none';
 }
 
 export interface MayanNawal {
@@ -131,12 +137,14 @@ export interface SigilState {
     dayNightMode: 'DAY' | 'NIGHT';
     lastInteraction: string; // ISO Date
     memoryContext: string; // Summary of past conversations
+    evolution_stage?: number;
+    preferred_tone?: 'DIDACTICO' | 'MISTICO' | 'DIRECTO';
 }
 
 export interface EnergySnapshot {
     date: string; // YYYY-MM-DD
     transitScore: number; // 1-10 (How favorable are transits)
-    dominantElement: 'FIRE' | 'EARTH' | 'AIR' | 'WATER';
+    dominantElement: 'FIRE' | 'EARTH' | 'AIR' | 'WATER' | 'FUEGO' | 'TIERRA' | 'AIRE' | 'AGUA';
     guidance: string; // Daily proverb/summary
     moonPhase: string;
     // Sigil 2.0: Daily Wisdom

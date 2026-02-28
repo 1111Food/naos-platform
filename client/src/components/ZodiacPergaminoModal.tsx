@@ -2,6 +2,8 @@ import React from 'react';
 import { X, Sparkles, Shield, Compass, Zap, Heart, Coins, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { ChineseZodiacWisdom } from '../data/chineseZodiacData';
+import { getChineseZodiacImage } from '../utils/chineseMapper';
+import { cn } from '../lib/utils';
 
 interface ZodiacPergaminoModalProps {
     isOpen: boolean;
@@ -9,6 +11,25 @@ interface ZodiacPergaminoModalProps {
     animal: string;
     data: ChineseZodiacWisdom;
 }
+
+// 🏮 CHINESE ANIMAL IMAGE COMPONENT
+const ChineseAnimalImage = ({ animal, className }: { animal: string, className?: string }) => {
+    const [imgError, setImgError] = React.useState(false);
+    if (!animal) return null;
+
+    if (imgError) {
+        return <span className={cn("text-7xl", className)}>{getAnimalEmoji(animal)}</span>;
+    }
+
+    return (
+        <img
+            src={getChineseZodiacImage(animal)}
+            alt={animal}
+            onError={() => setImgError(true)}
+            className={cn("object-contain drop-shadow-[0_0_30px_rgba(225,29,72,0.8)] brightness-150 filter", className)}
+        />
+    );
+};
 
 export const ZodiacPergaminoModal: React.FC<ZodiacPergaminoModalProps> = ({ isOpen, onClose, animal, data }) => {
     return (
@@ -53,7 +74,12 @@ export const ZodiacPergaminoModal: React.FC<ZodiacPergaminoModalProps> = ({ isOp
                                     transition={{ duration: 0.8 }}
                                     className="w-32 h-32 rounded-full border-4 border-rose-600/40 flex items-center justify-center mb-8 bg-rose-950/20 shadow-[0_0_50px_rgba(225,29,72,0.3)]"
                                 >
-                                    <span className="text-7xl">{getAnimalEmoji(animal)}</span>
+                                    <div className="relative w-full h-full flex items-center justify-center">
+                                        <ChineseAnimalImage
+                                            animal={animal}
+                                            className="w-24 h-24 z-10"
+                                        />
+                                    </div>
                                 </motion.div>
 
                                 <span className="text-[10px] uppercase tracking-[0.5em] text-rose-500 font-bold mb-3">Códice Imperial BaZi</span>

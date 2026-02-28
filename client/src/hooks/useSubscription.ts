@@ -7,11 +7,16 @@ export interface SubscriptionStatus {
     features: string[];
 }
 
-export function useSubscription() {
+export function useSubscription(shouldFetch: boolean = true) {
     const [status, setStatus] = useState<SubscriptionStatus | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(shouldFetch);
 
     useEffect(() => {
+        if (!shouldFetch) {
+            setLoading(false);
+            return;
+        }
+
         fetch(endpoints.subscription)
             .then(res => res.json())
             .then(data => {

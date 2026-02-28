@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ArrowLeft, RefreshCw, Layers, HelpCircle, Moon } from 'lucide-react';
+import { Sparkles, ArrowLeft, Layers, HelpCircle, Moon } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { TarotCard } from '../components/TarotCard';
+import { StrategicCard } from '../components/StrategicCard';
+import { BreathingEngine } from '../components/BreathingEngine';
+import { useSound } from '../hooks/useSound';
 
 // --- Ritual States ---
-type RitualState = 'INVOCATION' | 'SPREAD_SELECTION' | 'CARD_SELECTION' | 'REVELATION' | 'INTERPRETATION' | 'CLOSING';
+type RitualState = 'INVOCATION' | 'CALIBRATION' | 'BREATHING' | 'SPREAD_SELECTION' | 'CARD_SELECTION' | 'REVELATION' | 'INTERPRETATION' | 'CLOSING';
 type SpreadType = 'ONE_CARD' | 'THREE_CARD' | 'CELTIC' | 'YES_NO';
 type OracleState = 'LOADING' | 'VOCAL' | 'SILENT';
 
 interface TarotProps {
     onBack: () => void;
+    embedded?: boolean;
 }
 
 const THEME = {
@@ -27,10 +30,12 @@ const MAJOR_ARCANA = [
     "El Loco", "El Mago", "La Sacerdotisa", "La Emperatriz", "El Emperador",
     "El Hierofante", "Los Enamorados", "El Carro", "La Fuerza", "El Ermitaño",
     "La Rueda de la Fortuna", "La Justicia", "El Colgado", "La Muerte", "La Templanza",
-    "El Diablo", "La Torre", " La Estrella", "La Luna", "El Sol", "El Juicio", "El Mundo"
+    "El Diablo", "La Torre", "La Estrella", "La Luna", "El Sol", "El Juicio", "El Mundo"
 ];
 
+import { useCoherence } from '../hooks/useCoherence';
 export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
+    const { score } = useCoherence();
     const [ritualState, setRitualState] = useState<RitualState>('INVOCATION');
     const [oracleState, setOracleState] = useState<OracleState>('VOCAL');
     const [soulIntent, setSoulIntent] = useState('');
@@ -38,6 +43,36 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
     const [deck, setDeck] = useState<number[]>([]);
     const [selectedCards, setSelectedCards] = useState<number[]>([]);
     const [reading, setReading] = useState<any>(null);
+    const [bypassedCoherence, setBypassedCoherence] = useState(false);
+    const { playSound } = useSound();
+    const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+    // Audio Logic Placeholder
+    React.useEffect(() => {
+        const audioUrl = 'https://avaikhukgugvcocwedsz.supabase.co/storage/v1/object/public/tarot-assets/frecuencia-tierra.mp3';
+        const audio = new Audio(encodeURI(audioUrl));
+        audio.loop = true;
+        audio.volume = 0.3;
+        audioRef.current = audio;
+
+        return () => {
+            audio.pause();
+            audioRef.current = null;
+        };
+    }, []);
+
+    React.useEffect(() => {
+        // Play audio when module is active
+        // Note: Browsers require user interaction before playing audio
+        if (ritualState !== 'INVOCATION' && audioRef.current) {
+            const playPromise = audioRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Audio autoplay prevented - waiting for interaction:", error);
+                });
+            }
+        }
+    }, [ritualState]);
 
     const pageVariants = {
         initial: { opacity: 0, y: 10 },
@@ -56,6 +91,7 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
     };
 
     const handleSpreadSelect = (s: SpreadType) => {
+        playSound('click');
         setSpread(s);
         initDeck();
         setRitualState('CARD_SELECTION');
@@ -65,6 +101,7 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
 
     const handleCardSelect = (index: number) => {
         if (selectedCards.includes(index)) return;
+        playSound('click');
         const newSelection = [...selectedCards, index];
         setSelectedCards(newSelection);
 
@@ -89,15 +126,16 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
         });
 
         try {
-            const { endpoints } = await import('../lib/api');
+            const { endpoints, getAuthHeaders } = await import('../lib/api');
             const response = await fetch(endpoints.tarot, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders() as HeadersInit,
                 body: JSON.stringify({
                     question: soulIntent,
                     spreadType: spread || 'ONE_CARD',
                     cards: finalCards,
-                    mode: 'INTERPRETATIVE'
+                    mode: 'INTERPRETATIVE',
+                    bypassCoherence: bypassedCoherence
                 })
             });
 
@@ -151,7 +189,7 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                 </button>
                 <div className="flex items-center gap-3 tracking-[0.6em] text-[11px] uppercase font-bold text-red-500/60 transition-all duration-1000">
                     <Moon className="w-3.5 h-3.5 opacity-40 animate-pulse" />
-                    <span>Ritual de Tarot</span>
+                    <span>Radiografía Estratégica</span>
                 </div>
                 <div className="w-9" />
             </header>
@@ -182,7 +220,7 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                             </div>
 
                             <button
-                                onClick={() => soulIntent.trim() && setRitualState('SPREAD_SELECTION')}
+                                onClick={() => { playSound('success'); soulIntent.trim() && setRitualState('CALIBRATION'); }}
                                 disabled={!soulIntent.trim()}
                                 className={cn(
                                     "px-12 py-3 rounded-full border border-white/5 uppercase tracking-[0.3em] text-[11px] transition-all duration-1000",
@@ -190,6 +228,69 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                                 )}
                             >
                                 Iniciar Ritual
+                            </button>
+                        </motion.div>
+                    )}
+
+                    {/* 1.5 CALIBRATION INTERSTITIAL (The Ritual Bridge) */}
+                    {ritualState === 'CALIBRATION' && (
+                        <motion.div
+                            key="calibration" variants={pageVariants} initial="initial" animate="in" exit="out"
+                            className="w-full max-w-xl text-center space-y-12 mt-20"
+                        >
+                            <div className="space-y-6">
+                                <h1 className="text-[28px] font-light tracking-widest text-amber-50/90 uppercase">Sintonización Requerida</h1>
+                                <div className="w-16 h-[1px] bg-red-500/30 mx-auto" />
+                                <p className={cn(THEME.textSoft, "text-lg font-light leading-relaxed px-8")}>
+                                    Has invocado al oráculo por <span className="text-amber-100 italic">"{soulIntent}"</span>.
+                                    Para recibir la verdad sin ruido, se recomienda limpiar tu canal.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+                                <button
+                                    onClick={() => {
+                                        setBypassedCoherence(false);
+                                        setRitualState('BREATHING');
+                                    }}
+                                    className="px-8 py-4 rounded-full bg-red-900/10 border border-red-500/20 text-red-100 hover:bg-red-900/20 hover:border-red-500/40 transition-all uppercase tracking-[0.2em] text-[10px] flex items-center gap-3 group"
+                                >
+                                    <span>🧘‍♂️ Calibrar (1 min)</span>
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        setBypassedCoherence(true);
+                                        setRitualState('SPREAD_SELECTION');
+                                    }}
+                                    className="px-8 py-4 rounded-full border border-white/5 text-white/30 hover:text-white/60 hover:bg-white/5 transition-all uppercase tracking-[0.2em] text-[10px] flex items-center gap-3"
+                                >
+                                    <span>⚡ Proceder Directamente</span>
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* 1.6 BREATHING RITUAL */}
+                    {ritualState === 'BREATHING' && (
+                        <motion.div
+                            key="breathing" variants={pageVariants} initial="initial" animate="in" exit="out"
+                            className="w-full flex flex-col items-center justify-center space-y-8"
+                        >
+                            <BreathingEngine
+                                technique="AIR_FLOW"
+                                onComplete={() => {
+                                    setTimeout(() => setRitualState('SPREAD_SELECTION'), 1000);
+                                }}
+                            />
+                            <button
+                                onClick={() => {
+                                    setBypassedCoherence(true); // Assuming skipping here is also a bypass
+                                    setRitualState('SPREAD_SELECTION');
+                                }}
+                                className="text-white/20 hover:text-white/40 text-[9px] uppercase tracking-[0.3em] transition-colors"
+                            >
+                                Saltar Sintonización
                             </button>
                         </motion.div>
                     )}
@@ -228,8 +329,8 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                             <div className="flex flex-wrap justify-center gap-3 max-w-5xl mx-auto px-4">
                                 {[...Array(22)].map((_, i) => (
                                     <div key={i} className="w-16 h-28 md:w-20 md:h-32">
-                                        <TarotCard
-                                            index={i} isRevealed={false} isSelected={selectedCards.includes(i)}
+                                        <StrategicCard
+                                            id={i} isRevealed={false} isSelected={selectedCards.includes(i)}
                                             onClick={() => handleCardSelect(i)}
                                             className={selectedCards.includes(i) ? "opacity-20 translate-y-2" : ""}
                                         />
@@ -268,7 +369,7 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                                 {reading?.cards.map((card: any, idx: number) => (
                                     <div key={idx} className="flex flex-col items-center gap-6 w-52">
                                         <div className="w-52 h-80">
-                                            <TarotCard index={card.id} name={card.name} isRevealed={true} />
+                                            <StrategicCard id={card.id} name={card.name} isRevealed={true} />
                                         </div>
                                     </div>
                                 ))}
@@ -289,6 +390,7 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                                 <div className="max-w-2xl mx-auto space-y-12">
                                     <div className="relative p-10 bg-white/[0.01] border border-white/5 rounded-[2rem] overflow-hidden">
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-[1px] bg-red-500/20" />
+                                        <p className="text-[17px] uppercase tracking-widest text-red-500/60 mb-6 font-bold">ANÁLISIS SIMBÓLICO</p>
                                         <p className="text-[19px] leading-relaxed text-amber-50/70 font-light italic">
                                             {reading?.interpretation}
                                         </p>
@@ -312,6 +414,15 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Low Energy Warning Footer */}
+                            {score < 40 && !bypassedCoherence && (
+                                <div className="mt-8 p-4 rounded-xl bg-red-900/10 border border-red-500/20 text-center animate-pulse">
+                                    <p className="text-[10px] uppercase tracking-widest text-red-400/60">
+                                        ⚠️ Interpretación generada bajo turbulencia energética. Tómalo con calma.
+                                    </p>
+                                </div>
+                            )}
                         </motion.div>
                     )}
 
@@ -333,7 +444,7 @@ export const Tarot: React.FC<TarotProps> = ({ onBack }) => {
                                 <p className={THEME.textSoft}>Que la luz de los Arcanos guíe tu camino.</p>
                             </div>
                             <button
-                                onClick={onBack}
+                                onClick={() => { playSound('click'); onBack(); }}
                                 className="px-12 py-3 rounded-full border border-white/10 text-amber-50 hover:bg-white/5 transition-all uppercase tracking-[0.3em] text-[11px]"
                             >
                                 Volver al Templo

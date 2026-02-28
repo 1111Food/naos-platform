@@ -1,0 +1,4 @@
+Status: 200
+Payload Length: 499
+✅ JSON Serialization Check: PASSED
+Body Snippet: {"sun":{"name":"Sun","sign":"Leo","degree":7.59,"absDegree":127.5877884923284,"house":11,"retrograde":false},"moon":{"name":"Moon","sign":"Virgo","degree":18.58,"absDegree":168.58210479642506,"house":12,"retrograde":false},"elements":{"fire":3,"earth":2,"air":0,"water":5},"numerology":{"lifePath":8,"personalYear":0},"mayanSign":"Kame","chinese":{"sign":"Caballo","element":"Tierra"},"meta":{"lat":15.585555,"lng":-90.345759,"utcOffset":-6,"resolvedCity":"guatemala","resolvedCountry":"Guatemala"}}...

@@ -66,11 +66,17 @@ export class UserService {
             const dbProfile: UserProfile = {
                 ...baseProfile,
                 id: data.id,
-                name: data.full_name || baseProfile.name || 'Viajero cosmico',
+                name: data.name || data.full_name || baseProfile.name || 'Viajero cosmico',
+                guardian_notes: data.guardian_notes || baseProfile.guardian_notes || undefined,
                 birthDate: data.birth_date || baseProfile.birthDate || '',
                 birthTime: data.birth_time || baseProfile.birthTime || '',
                 birthCity: data.birth_location || baseProfile.birthCity || '',
-                astrology: data.natal_chart || baseProfile.astrology || undefined,
+                // MAPPING FIX v9.11: Explicitly map new columns
+                astrology: data.astrology || data.natal_chart || baseProfile.astrology || undefined,
+                numerology: data.numerology || baseProfile.numerology || undefined,
+                mayan: data.mayan || baseProfile.mayan || undefined,
+                nawal_maya: data.nawal_maya || baseProfile.nawal_maya || undefined,
+
                 sigil_url: data.sigil_url || baseProfile.sigil_url || undefined,
                 coordinates: baseProfile.coordinates || { lat: 14.634900, lng: -90.506900 },
                 utcOffset: baseProfile.utcOffset !== undefined ? baseProfile.utcOffset : -6,
@@ -96,9 +102,9 @@ export class UserService {
         if (!profilesCache[userId]) {
             profilesCache[userId] = {
                 id: userId,
-                name: 'Viajero del Tiempo',
-                birthDate: '1990-01-01',
-                birthTime: '12:00',
+                name: 'Viajero en el Umbral',
+                birthDate: '',
+                birthTime: '',
                 birthPlace: 'Tierra',
                 birthCity: '',
                 birthState: '',
@@ -151,8 +157,36 @@ export class UserService {
                 description: mayanData.description,
                 glyphUrl: mayanData.glyphUrl
             };
-            p.nawal_maya = mayanData.nawal_maya;
             p.nawal_tono = mayanData.nawal_tono;
+        }
+
+        // 4. Chinese Astrology Check
+        if (!p.chinese_animal && p.birthDate) {
+            console.log(`🏮 Bridge: Calculating Chinese for ${p.name}...`);
+            const chineseData = ChineseAstrology.calculate(p.birthDate);
+            p.chinese_animal = chineseData.animal;
+            p.chinese_element = chineseData.element;
+            p.chinese_birth_year = chineseData.birthYear;
+
+            // Persist to database immediately
+            try {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                        chinese_animal: chineseData.animal,
+                        chinese_element: chineseData.element,
+                        chinese_birth_year: chineseData.birthYear
+                    })
+                    .eq('id', userId);
+
+                if (error) {
+                    console.error('   ⚠️ Failed to persist Chinese data:', error);
+                } else {
+                    console.log('   ✅ Chinese data persisted to DB');
+                }
+            } catch (err) {
+                console.error('   ❌ Error persisting Chinese data:', err);
+            }
         }
 
         return profilesCache[userId];
@@ -269,6 +303,20 @@ export class UserService {
             updated.fengShui = undefined;
         }
 
+        // Chinese Astrology - BULLETPROOF
+        if (updated.birthDate) {
+            try {
+                console.log("   -> 🏮 Calculating Chinese Astrology...");
+                const chineseData = ChineseAstrology.calculate(updated.birthDate);
+                updated.chinese_animal = chineseData.animal;
+                updated.chinese_element = chineseData.element;
+                updated.chinese_birth_year = chineseData.birthYear;
+                console.log(`      ✅ Found: ${updated.chinese_animal} de ${updated.chinese_element}`);
+            } catch (chineseError) {
+                console.error("      ⚠️ Chinese calculation failed:", chineseError);
+            }
+        }
+
         // Update Cache
         if (Object.keys(profilesCache).length === 0) await this.loadProfiles();
         profilesCache[userId] = updated;
@@ -276,25 +324,82 @@ export class UserService {
 
         // 4. Supabase Sync (Si hay credenciales)
         if (config.SUPABASE_URL) {
-            const { error: upsertError } = await supabase
-                .from('profiles')
-                .upsert({
-                    id: userId,
-                    full_name: updated.name,
-                    birth_date: updated.birthDate,
-                    birth_time: updated.birthTime,
-                    birth_location: updated.birthCity,
-                    // Persist calculated data
-                    natal_chart: updated.astrology,
-                    plan_type: updated.plan_type,
-                    profile_data: updated, // JSONB dump for flexibility
-                    updated_at: new Date().toISOString()
-                });
+            const supabasePayload = {
+                id: userId,
+                full_name: updated.name,
+                birth_date: updated.birthDate,
+                birth_time: updated.birthTime,
+                birth_location: updated.birthCity,
+                // Persist calculated data (v9.11 FIX)
+                natal_chart: updated.astrology, // Keep backward compat
+                astrology: updated.astrology,
+                numerology: updated.numerology,
+                mayan: updated.mayan,
+                nawal_maya: updated.nawal_maya, // Text column
 
-            if (upsertError) console.error("Supabase Sync Error:", upsertError);
-            else console.log("☁️ Supabase Synced.");
+                plan_type: updated.plan_type,
+                profile_data: updated, // JSONB dump for flexibility
+                updated_at: new Date().toISOString()
+            };
+
+            console.log("🚀 INTENTO DE GUARDADO (Supabase):", JSON.stringify(supabasePayload, null, 2));
+
+            const { data: upsertData, error: upsertError } = await supabase
+                .from('profiles')
+                .upsert(supabasePayload)
+                .select();
+
+            if (upsertError) {
+                console.error("❌ ERROR DE SUPABASE:", JSON.stringify(upsertError, null, 2));
+            } else {
+                console.log("✅ ÉXITO EN SUPABASE:", JSON.stringify(upsertData, null, 2));
+            }
         }
 
         return updated;
+    }
+
+    static async incrementXp(userId: string, amount: number) {
+        if (!config.SUPABASE_URL) return;
+
+        try {
+            console.log(`✨ UserService: Incrementando ${amount} XP para ${userId}`);
+
+            // 1. Get current XP from user_evolution
+            const { data, error: fetchError } = await supabase
+                .from('user_evolution')
+                .select('xp_points')
+                .eq('user_id', userId)
+                .single();
+
+            if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 is "No rows found"
+                console.error("❌ Error fetching XP:", fetchError);
+                return;
+            }
+
+            const currentXp = data?.xp_points || 0;
+            const newXp = currentXp + amount;
+
+            // 2. Upsert (to handle cases where record doesn't exist yet)
+            const { error: upsertError } = await supabase
+                .from('user_evolution')
+                .upsert({
+                    user_id: userId,
+                    xp_points: newXp,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (upsertError) {
+                console.error("❌ Error updating XP:", upsertError);
+            } else {
+                console.log(`✅ XP Actualizado: ${currentXp} -> ${newXp}`);
+            }
+        } catch (e) {
+            console.error("❌ Exception incrementing XP:", e);
+        }
+    }
+
+    static getRawState() {
+        return profilesCache;
     }
 }

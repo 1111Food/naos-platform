@@ -1,25 +1,41 @@
 import React, { useState } from 'react';
 import { Hash, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PINNACLE_INTERPRETATIONS } from '../data/pinnacleData';
+import { PINNACLE_INTERPRETATIONS, PINNACLE_POSITIONS } from '../data/pinnacleData';
 import { cn } from '../lib/utils';
 import { useGuardianState } from '../contexts/GuardianContext';
 import { useActiveProfile } from '../hooks/useActiveProfile';
+import { NeonNumber } from './NeonNumber';
+import { getNumberText } from '../utils/numberMapper';
 
 interface NumerologyViewProps {
-    data?: any; // Mantener por compatibilidad, pero no se usa
+    data?: any; // Mantener por compatibilidad
+    overrideProfile?: any; // Renamed from overrideData
 }
 
-export const NumerologyView: React.FC<NumerologyViewProps> = () => {
+export const NumerologyView: React.FC<NumerologyViewProps> = ({ overrideProfile }) => {
     const [selectedPosition, setSelectedPosition] = useState<{ id: string, title: string, number: number } | null>(null);
     const { trackEvent } = useGuardianState();
     // --- UNIFIED STATE (v9.16) ---
-    const { profile, loading } = useActiveProfile();
+    const { profile: activeProfile, loading: activeLoading } = useActiveProfile();
+
+    // Logic for Profile Injection
+    const profile = overrideProfile || activeProfile;
+    const loading = overrideProfile ? false : activeLoading;
 
     // Obtener datos de numerología del perfil
     const data = profile?.numerology;
 
-    if (loading || !data) return <div className="text-center text-white/50 animate-pulse mt-12">Escuchando tu vibración numérica...</div>;
+    if (loading) return <div className="text-white text-center p-8">Cargando frecuencias...</div>;
+
+    if (!profile || (!profile.birthDate && !data)) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 text-center text-white/50">
+                <p className="mb-4">Esencia Incompleta</p>
+                <p className="text-xs max-w-xs">Configura tu fecha de nacimiento o calcula un perfil para ver el Pináculo.</p>
+            </div>
+        );
+    }
 
     const handleOpenModal = (id: string, title: string, number: any) => {
         if (number === undefined || number === null || number === '?') return;
@@ -37,18 +53,31 @@ export const NumerologyView: React.FC<NumerologyViewProps> = () => {
     return (
         <div className="w-full max-w-6xl mx-auto space-y-12 animate-in fade-in duration-1000 p-4">
 
-            {/* Header: Life Path */}
-            <div className="relative group overflow-hidden bg-purple-950/20 border border-purple-500/20 p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] text-center backdrop-blur-xl">
-                <div className="absolute top-0 right-0 p-8 md:p-12 opacity-5 group-hover:rotate-12 transition-transform duration-1000">
-                    <Hash className="w-32 h-32 md:w-48 md:h-48 text-purple-400" />
+            <div className="relative group overflow-hidden bg-white/[0.02] border border-white/5 p-10 md:p-12 rounded-[36px] text-center backdrop-blur-xl flex flex-col items-center">
+                <div className="absolute top-0 right-0 p-8 md:p-12 opacity-[0.03] group-hover:rotate-12 transition-transform duration-1000">
+                    <Hash className="w-48 h-48 text-white" />
                 </div>
-                <span className="text-[10px] uppercase tracking-[0.4em] text-purple-400 font-bold mb-4 block">Tu Camino de Vida</span>
-                <div className="text-7xl md:text-8xl lg:text-[10rem] font-serif leading-none text-white drop-shadow-glow">
-                    {data.lifePathNumber}
+                <span className="text-[10px] uppercase tracking-[0.4em] text-white/20 font-black mb-10 block">Frecuencia de Encarnación</span>
+
+                {/* 🌟 NEON TAROT CARD INTEGRATION */}
+                <div className="relative w-40 aspect-[3/4] mb-8">
+                    <div className="absolute inset-0 rounded-[2rem] border border-white/10 bg-black/40 overflow-hidden shadow-2xl group-hover:border-white/20 transition-colors">
+                        <NeonNumber
+                            value={data.lifePathNumber}
+                            isFullCard={true}
+                            className="w-full h-full"
+                        />
+                    </div>
                 </div>
-                <p className="text-white/60 text-sm md:text-lg font-serif italic max-w-xl mx-auto mt-6">
-                    "Tu vibración maestra es el {data.lifePathNumber}, la esencia que guía tu encarnación actual."
-                </p>
+
+                <div className="text-center space-y-2">
+                    <h2 className="text-xl font-black text-white/80 uppercase tracking-[0.2em]">
+                        {getNumberText(data.lifePathNumber)}
+                    </h2>
+                    <p className="text-white/40 text-[10px] uppercase tracking-[0.3em] font-light max-w-sm mx-auto leading-relaxed">
+                        "Tu vibración de Camino de Vida revela la arquitectura fundamental de tu espíritu."
+                    </p>
+                </div>
             </div>
 
             {/* Main Content: Pinaculo (Diamond Graph) + Sidebar */}
@@ -56,7 +85,12 @@ export const NumerologyView: React.FC<NumerologyViewProps> = () => {
 
                 {/* Visual Graph Section */}
                 <div className="flex-1 bg-black/40 border border-white/5 p-8 rounded-[3rem] overflow-hidden flex flex-col items-center justify-center min-h-[600px]">
-                    <h3 className="font-serif text-2xl text-white mb-8 tracking-wider">Pináculo del Destino</h3>
+                    <div className="mb-0 mt-2 text-center w-full">
+                        <h3 className="text-sm font-bold uppercase tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-300 to-amber-200">
+                            ARQUITECTURA DEL ALMA
+                        </h3>
+                        <div className="h-[1px] w-48 mx-auto mt-1 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                    </div>
 
                     <div className="relative w-full aspect-[4/5] max-w-lg">
                         <svg className="w-full h-full drop-shadow-2xl" viewBox="0 0 400 500">
@@ -152,11 +186,16 @@ export const NumerologyView: React.FC<NumerologyViewProps> = () => {
                     </div>
                 </div>
 
-                {/* Sidebar: Guía de Posiciones */}
+                {/* Sidebar: CÓDIGOS DE VIDA */}
                 <div className="w-full lg:w-96 rounded-[2rem] md:rounded-[3rem] bg-black/40 border border-white/5 overflow-hidden flex flex-col lg:max-h-[800px]">
-                    <div className="p-6 border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 z-10">
-                        <h4 className="font-serif text-xl text-white">Guía de Posiciones</h4>
-                        <p className="text-[10px] uppercase tracking-wider text-white/40 mt-1">Mapa de tu arquitectura espiritual</p>
+                    <div className="p-8 border-b border-white/5 bg-white/[0.02] backdrop-blur-md sticky top-0 z-10">
+                        <div className="mb-0 mt-2">
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-rose-500" />
+                                Códigos de Vida
+                            </h3>
+                            <div className="h-[1px] w-full mt-2 bg-gradient-to-r from-white/10 via-white/5 to-transparent"></div>
+                        </div>
                     </div>
 
                     <div className="overflow-y-auto p-4 space-y-2 custom-scrollbar flex-1">
@@ -192,9 +231,16 @@ export const NumerologyView: React.FC<NumerologyViewProps> = () => {
                                         <div className="w-8 h-8 rounded-full bg-black border border-white/20 flex items-center justify-center text-xs font-bold text-white group-hover:bg-purple-500 group-hover:border-purple-400 transition-colors">
                                             {item.l}
                                         </div>
-                                        <span className="text-sm font-bold text-white/90">{item.t}</span>
+                                        <span className="text-sm font-bold text-violet-400 group-hover:text-violet-300 transition-colors">{item.t}</span>
                                     </div>
-                                    <span className="font-serif text-xl text-purple-400">{item.v ?? '-'}</span>
+                                    <div className="w-10 aspect-[3/4] rounded-lg border border-purple-500/20 overflow-hidden bg-black/40 flex items-center justify-center flex-shrink-0 group-hover:border-purple-500/40 transition-all">
+                                        <NeonNumber
+                                            value={item.v ?? '?'}
+                                            color="fuchsia"
+                                            isFullCard={true}
+                                            className="w-full h-full"
+                                        />
+                                    </div>
                                 </div>
                                 <p className="text-xs text-white/50 pl-11 leading-relaxed border-l-2 border-white/10 ml-4">
                                     {item.d}
@@ -241,7 +287,14 @@ export const NumerologyView: React.FC<NumerologyViewProps> = () => {
 
                                 <div className="py-4 border-y border-white/5">
                                     <div className="flex items-center gap-6">
-                                        <div className="text-6xl md:text-7xl font-serif text-yellow-500/80">{selectedPosition.number}</div>
+                                        <div className="w-24 aspect-[3/4] rounded-xl border border-amber-500/30 overflow-hidden shadow-2xl bg-black/40 flex-shrink-0">
+                                            <NeonNumber
+                                                value={selectedPosition.number}
+                                                color="amber"
+                                                isFullCard={true}
+                                                className="w-full h-full"
+                                            />
+                                        </div>
                                         <div>
                                             <div className="text-[10px] uppercase tracking-wider text-white/30">Arquetipo Maestro</div>
                                             <div className="text-xl font-serif text-white/90">
@@ -253,13 +306,21 @@ export const NumerologyView: React.FC<NumerologyViewProps> = () => {
                             </div>
 
                             <div className="overflow-y-auto pr-4 custom-scrollbar space-y-8 flex-1">
-                                {PINNACLE_INTERPRETATIONS[selectedPosition.number]?.blocks ? (
-                                    PINNACLE_INTERPRETATIONS[selectedPosition.number].blocks.map((block, i) => (
-                                        <p key={i} className="text-lg leading-relaxed text-white/80 font-serif text-justify first-letter:text-4xl first-letter:font-bold first-letter:mr-2 first-letter:float-left first-letter:text-yellow-500/60">
-                                            {block}
+                                {PINNACLE_INTERPRETATIONS[selectedPosition.number] && (
+                                    <div className="space-y-6">
+                                        <p className="text-xl leading-relaxed text-yellow-400/90 font-serif italic border-l-2 border-yellow-500/30 pl-4 mb-8">
+                                            Al encontrarse en tu <span className="font-bold text-white">{PINNACLE_POSITIONS[selectedPosition.id]?.title || selectedPosition.title}</span>, {PINNACLE_POSITIONS[selectedPosition.id]?.context || "esta frecuencia actúa sobre tu código de identidad"}.
                                         </p>
-                                    ))
-                                ) : (
+
+                                        {PINNACLE_INTERPRETATIONS[selectedPosition.number].blocks.map((block, i) => (
+                                            <p key={i} className="text-lg leading-relaxed text-white/80 font-serif text-justify first-letter:text-4xl first-letter:font-bold first-letter:mr-2 first-letter:float-left first-letter:text-yellow-500/60">
+                                                {block}
+                                            </p>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {!PINNACLE_INTERPRETATIONS[selectedPosition.number] && (
                                     <p className="text-lg leading-relaxed text-white/80 font-serif italic text-justify">
                                         La sabiduría para esta posición aún se encuentra velada bajo el manto del misterio. Sigo explorando tu vibración.
                                     </p>
